@@ -46,6 +46,5 @@ overrides:
   "source-map-js": 1.2.2
   "undici": 7.29.1
   "uuid@11.1.0": 11.1.1
-  "vite@6.4.2": 8.1.0
   "ws": 8.21.0
   "yaml@1.10.2": 1.10.3
