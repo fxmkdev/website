@@ -16,9 +16,9 @@
     "@fxmk/shared": "workspace:../../libs/shared",
     "@headlessui/react": "^2.2.10",
     "@imagekit/javascript": "^5.4.0",
-    "@payloadcms/live-preview-react": "^3.84.1",
-    "@react-router/node": "^7.15.1",
-    "@react-router/serve": "^7.15.1",
+    "@payloadcms/live-preview-react": "^3.90.2",
+    "@react-router/node": "^7.18.2",
+    "@react-router/serve": "^7.18.2",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.3.0",
     "clsx": "^2.1.1",
@@ -29,13 +29,13 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-hot-toast": "^2.6.0",
-    "react-router": "^7.15.1",
+    "react-router": "^7.18.2",
     "vite-plugin-prismjs": "^0.0.11"
   },
   "devDependencies": {
     "@eslint/compat": "^2.1.0",
     "@eslint/js": "^10.0.1",
-    "@react-router/dev": "^7.15.1",
+    "@react-router/dev": "^7.18.2",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -52,7 +52,7 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.4",
     "vite": "^8.1.0",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.11"
   },
   "packageManager": "pnpm@11.2.2+sha512.36e6621fad506178936455e70247b8808ef4ec25797a9f437a93281a020484e2607f6a469a22e982987c3dbb8866e3071514ab10a4a1749e06edcd1ec118436f",
   "version": "0.0.0-unknown"

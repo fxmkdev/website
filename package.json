@@ -17,6 +17,6 @@
     "prettier": "^3.8.3"
   },
   "dependencies": {
-    "payload": "^3.84.1"
+    "payload": "^3.90.2"
   }
 }
