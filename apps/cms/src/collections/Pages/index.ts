@@ -35,6 +35,14 @@ export const Pages: CollectionConfig<"pages"> = {
   },
   admin: {
     defaultColumns: ["title", "slug", "pathname", "updatedAt"],
+    livePreview: {
+      url: ({ data }) => {
+        const livePreviewUrl = new URL(getPreviewUrl(data));
+        livePreviewUrl.searchParams.set("livePreviewDocument", "page");
+        return livePreviewUrl.toString();
+      },
+    },
+    preview: (data) => getPreviewUrl(data),
     useAsTitle: "pathname",
   },
   fields: [
@@ -143,3 +151,12 @@ export const Pages: CollectionConfig<"pages"> = {
     maxPerDoc: 50,
   },
 };
+
+function getPreviewUrl(data: Record<string, unknown>) {
+  return `${process.env.FRONTEND_BASE_URL}${getPagePathname(data.pathname)}?previewKey=${process.env.PREVIEW_KEY}`;
+}
+
+function getPagePathname(pathname: unknown) {
+  if (typeof pathname !== "string" || !pathname.trim()) return "/";
+  return pathname.startsWith("/") ? pathname : `/${pathname}`;
+}
