@@ -15,7 +15,7 @@ services:
     ports:
       - "3001:3001"
     environment:
-      SERVER_URL: http://cms:3001
+      SERVER_URL: http://localhost:3001
       DATABASE_URI: mongodb://mongo:27017/website-cms
       PAYLOAD_SECRET: ${PAYLOAD_SECRET}
       E2E_TESTS_API_KEY: ${CMS_API_KEY}
@@ -25,7 +25,7 @@ services:
       MEDIA_S3_SECRET_ACCESS_KEY: ${MEDIA_S3_SECRET_ACCESS_KEY}
       CACHE_REFRESH_TARGET_TYPE: single
       CACHE_REFRESH_TARGET: http://frontend:3000
-      FRONTEND_BASE_URL: http://frontend:3000
+      FRONTEND_BASE_URL: http://canonical.localhost:3000
       IMAGEKIT_BASE_URL: ${IMAGEKIT_BASE_URL}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       PREVIEW_KEY: preview-key

@@ -1,4 +1,5 @@
 import type { CollectionConfig } from "payload";
+import { getPreviewAccess } from "../../utilities/preview-access";
 
 export const Users: CollectionConfig = {
   slug: "users",
@@ -6,7 +7,9 @@ export const Users: CollectionConfig = {
     defaultColumns: ["name", "email"],
     useAsTitle: "name",
   },
-  auth: true,
+  auth: {
+    cookies: getPreviewAccess(process.env.FRONTEND_BASE_URL).cookies,
+  },
   fields: [
     {
       name: "name",

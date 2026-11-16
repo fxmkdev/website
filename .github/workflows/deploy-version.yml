@@ -173,6 +173,9 @@ jobs:
             ${{ inputs.environment == 'preview' && format('https://{0}.fly.dev',
             steps.create-app.outputs.frontend_app_name) ||
             vars.FRONTEND_BASE_URL }}
+          SERVER_URL:
+            ${{ inputs.environment == 'preview' && format('https://{0}.fly.dev',
+            steps.create-app.outputs.app_name) || vars.SERVER_URL }}
           IMAGEKIT_BASE_URL: ${{ vars.IMAGEKIT_BASE_URL }}
       - name: Deploy CMS
         run: |

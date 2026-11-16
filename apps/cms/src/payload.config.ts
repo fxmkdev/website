@@ -19,9 +19,11 @@ import { Config } from "./payload-types";
 import { SocialLinks } from "./collections/SocialLinks";
 import { Meta } from "./meta/config";
 import { ApiKeys } from "./collections/api-keys/config";
+import { getPreviewAccess } from "./utilities/preview-access";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
+const previewAccess = getPreviewAccess(process.env.FRONTEND_BASE_URL);
 
 declare module "payload" {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -29,6 +31,8 @@ declare module "payload" {
 }
 
 export default buildConfig({
+  cors: [...previewAccess.origins],
+  csrf: [...previewAccess.origins],
   admin: {
     importMap: {
       baseDir: path.resolve(dirname),
@@ -69,7 +73,9 @@ export default buildConfig({
   globals: [Header, Footer, Meta],
   plugins,
   secret: process.env.PAYLOAD_SECRET!,
-  serverURL: process.env.SERVER_URL,
+  serverURL: process.env.SERVER_URL
+    ? new URL(process.env.SERVER_URL).origin
+    : undefined,
   sharp,
   typescript: {
     outputFile: path.resolve(dirname, "payload-types.ts"),

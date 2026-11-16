@@ -205,6 +205,18 @@ API key. Preview requests validate the key and fetch drafts without reading or
 writing the published-content cache. Header, Footer, and Meta globals are not
 live-previewed.
 
+Set the CMS `SERVER_URL` to its public origin as well (locally,
+`http://localhost:3001`, with `FRONTEND_BASE_URL=http://localhost:3000`). The
+CMS allows only the configured frontend origin for credentialed CORS and CSRF;
+Payload also trusts `SERVER_URL` for admin authentication. Missing
+`FRONTEND_BASE_URL` grants no additional origin access.
+
+HTTPS frontends use `SameSite=None; Secure` CMS user cookies so authenticated
+preview requests can cross sites. HTTP localhost development uses `SameSite=Lax`
+without Secure. Sign in again after changing these settings to replace existing
+cookies. Browsers that block cross-site cookies may still prevent authenticated
+live updates; the frontend does not proxy these requests.
+
 See [Live preview docs](https://payloadcms.com/docs/live-preview/overview) for
 more details.
 
