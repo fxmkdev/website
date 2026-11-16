@@ -9,7 +9,7 @@ import { Hero } from "./hero";
 import { Projects } from "./projects";
 import type { Route } from "./+types/route";
 import type { SerializeFromLoader } from "~/utils/types";
-import { type loader as rootLoader } from "~/root";
+import type { loader as rootLoader } from "~/root";
 import { getPageMetaDescriptors } from "~/utils/page-meta";
 import { tryGetPage } from "~/utils/cms-data.server";
 import { OptInLivePreview } from "~/components/live-preview";

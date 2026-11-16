@@ -1,11 +1,11 @@
 import fs from "fs/promises";
-import {
-  type Footer,
-  type Header,
-  type Meta,
-  type Page,
-  type Post,
-  type Redirect,
+import type {
+  Footer,
+  Header,
+  Meta,
+  Page,
+  Post,
+  Redirect,
 } from "@fxmk/payload-types";
 import path from "path";
 import { PAGE_DEPTH, POST_DEPTH } from "./cms-data";

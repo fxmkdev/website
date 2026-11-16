@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import { type loader as rootLoader } from "~/root";
+import type { loader as rootLoader } from "~/root";
 
 type Environment = Awaited<ReturnType<typeof rootLoader>>["environment"];
 
