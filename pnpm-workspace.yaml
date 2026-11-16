@@ -35,6 +35,7 @@ overrides:
   "minimatch": 11.0.1
   "minimatch@3.1.2": 3.1.5
   "morgan": 1.12.1
+  "mongoose": 8.24.7
   "nanoid@3": 3.3.18
   "path-to-regexp@0.1.12": 0.1.13
   "picomatch@2.3.1": 2.3.2

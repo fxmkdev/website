@@ -16,7 +16,7 @@
     "@fxmk/shared": "workspace:../../libs/shared",
     "@headlessui/react": "^2.2.10",
     "@imagekit/javascript": "^5.4.0",
-    "@payloadcms/live-preview-react": "^3.92.1",
+    "@payloadcms/live-preview-react": "^3.93.0",
     "@react-router/node": "^7.18.5",
     "@react-router/serve": "^7.18.5",
     "@tailwindcss/typography": "^0.5.19",
