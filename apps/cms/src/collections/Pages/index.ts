@@ -153,7 +153,10 @@ export const Pages: CollectionConfig<"pages"> = {
 };
 
 function getPreviewUrl(data: Record<string, unknown>) {
-  return `${process.env.FRONTEND_BASE_URL}${getPagePathname(data.pathname)}?previewKey=${process.env.PREVIEW_KEY}`;
+  const url = new URL(process.env.FRONTEND_BASE_URL!);
+  url.pathname = getPagePathname(data.pathname);
+  url.searchParams.set("previewKey", process.env.PREVIEW_KEY!);
+  return url.toString();
 }
 
 function getPagePathname(pathname: unknown) {

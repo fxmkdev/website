@@ -195,8 +195,16 @@ For more details on how to extend this functionality, see the official
 
 ## Live preview
 
-In addition to draft previews you can also enable live preview to view your end
-resulting page as you're editing content with full support for SSR rendering.
+Pages and Posts support both draft preview and live preview in the admin editor.
+Preview opens the latest draft; live preview updates the rendered content while
+you edit. Pages use their `pathname`, and Posts use `/articles/:slug`.
+
+Set `FRONTEND_BASE_URL` in the CMS to the frontend origin, and configure the
+same `PREVIEW_KEY` in both apps. The frontend also needs its usual CMS URL and
+API key. Preview requests validate the key and fetch drafts without reading or
+writing the published-content cache. Header, Footer, and Meta globals are not
+live-previewed.
+
 See [Live preview docs](https://payloadcms.com/docs/live-preview/overview) for
 more details.
 
