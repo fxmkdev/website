@@ -16,6 +16,9 @@ http_code=000
 
 while (( SECONDS < deadline )); do
   remaining=$((deadline - SECONDS))
+  if (( remaining <= 0 )); then
+    break
+  fi
   timeout=$((remaining < 20 ? remaining : 20))
   if http_code=$(curl --silent --show-error --connect-timeout 5 \
     --max-time "$timeout" --output "$body_file" --write-out '%{http_code}' "$url"); then
