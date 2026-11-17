@@ -30,37 +30,11 @@ export interface Environment {
   endpoint?: string;
 }
 
-export async function loadEnvironment(
-  name: string,
-  directory: string,
-): Promise<Environment> {
-  if (!validEnvironment(name))
-    throw new Error(
-      "Invalid environment name; use lowercase letters, digits and hyphens.",
-    );
-  let values: Record<string, string>;
-  try {
-    values = parseEnv(
-      await readFile(resolve(directory, `.env.${name}`), "utf8"),
-    ) as Record<string, string>;
-  } catch {
-    throw new Error(
-      `Cannot read environment file .env.${name} in the selected config directory.`,
-    );
-  }
-  for (const key of [
-    "DATABASE_URI",
-    "S3_BUCKET",
-    "AWS_PROFILE",
-    "AWS_REGION",
-  ]) {
-    if (!values[key]?.trim())
-      throw new Error(`Missing ${key} in .env.${name}.`);
-  }
+function parseDatabase(uri: string) {
   let connection: MongoConnectionString;
   let database: string;
   try {
-    connection = new ConnectionString(values.DATABASE_URI);
+    connection = new ConnectionString(uri);
     database = decodeURIComponent(connection.pathname.slice(1));
     if (!connection.hosts.length || !validDatabase(database)) throw new Error();
   } catch {
@@ -68,6 +42,10 @@ export async function loadEnvironment(
       "DATABASE_URI must be a MongoDB URI with an explicit application database (letters, digits, underscores or hyphens). System databases are forbidden.",
     );
   }
+  return { database, hosts: connection.hosts.join(",") };
+}
+
+function parseStorage(values: Record<string, string>) {
   const bucket = values.S3_BUCKET;
   if (
     !/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(bucket) ||
@@ -103,14 +81,46 @@ export async function loadEnvironment(
     }
   }
   return {
-    name,
-    uri: values.DATABASE_URI,
-    database,
-    hosts: connection.hosts.join(","),
     bucket,
     profile: values.AWS_PROFILE,
     region: values.AWS_REGION,
     endpoint,
+  };
+}
+
+export async function loadEnvironment(
+  name: string,
+  directory: string,
+): Promise<Environment> {
+  if (!validEnvironment(name))
+    throw new Error(
+      "Invalid environment name; use lowercase letters, digits and hyphens.",
+    );
+  let values: Record<string, string>;
+  try {
+    values = parseEnv(
+      await readFile(resolve(directory, `.env.${name}`), "utf8"),
+    ) as Record<string, string>;
+  } catch {
+    throw new Error(
+      `Cannot read environment file .env.${name} in the selected config directory.`,
+    );
+  }
+  for (const key of [
+    "DATABASE_URI",
+    "S3_BUCKET",
+    "AWS_PROFILE",
+    "AWS_REGION",
+  ]) {
+    if (!values[key]?.trim())
+      throw new Error(`Missing ${key} in .env.${name}.`);
+  }
+
+  return {
+    name,
+    uri: values.DATABASE_URI,
+    ...parseDatabase(values.DATABASE_URI),
+    ...parseStorage(values),
   };
 }
 

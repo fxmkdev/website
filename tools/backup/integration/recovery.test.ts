@@ -216,7 +216,7 @@ child.on('error',()=>process.exit(1)); child.on('close',code=>process.exit(code?
     await writeFile(photo, "evil");
     await s3(["s3", "cp", photo, "s3://destination-media/photo.txt"]);
     await s3(["s3", "cp", photo, "s3://destination-media/extra.txt"]);
-    await data([
+    const preview = await data([
       "restore",
       "--env",
       "destination",
@@ -224,6 +224,16 @@ child.on('error',()=>process.exit(1)); child.on('close',code=>process.exit(code?
       snapshot,
       "--dry-run",
     ]);
+    assert.match(
+      preview,
+      /DROP destination collections \(2\):\n {2}"orphan"\n {2}"posts"/,
+    );
+    assert.match(preview, /RESTORE snapshot collections \(1\):\n {2}"posts"/);
+    assert.match(preview, /UPLOAD snapshot objects .*\(1\):\n {2}"photo.txt"/);
+    assert.match(
+      preview,
+      /DELETE destination-only objects \(1\):\n {2}"extra.txt"/,
+    );
     assert.equal(
       (await shell("destination", `print(db.posts.findOne()._id);`)).trim(),
       "old",

@@ -23,40 +23,7 @@ export async function fixture() {
     join(config, ".env.test"),
     "DATABASE_URI=mongodb://operator:secret-password@localhost:27017/source\nS3_BUCKET=test-media\nAWS_PROFILE=disposable\nAWS_REGION=us-east-1\n",
   );
-  const stub = `#!${process.execPath}
-import { appendFileSync, readFileSync, mkdirSync, writeFileSync } from 'node:fs';
-import { basename, join } from 'node:path';
-const tool = basename(process.argv[1]);
-const args = process.argv.slice(2);
-let input = '';
-for await (const chunk of process.stdin) input += chunk;
-appendFileSync(process.env.TEST_LOG, JSON.stringify({tool,args,input})+'\\n');
-if (args.includes('--version')) process.exit(0);
-if (tool === 'mongorestore' && args.includes('--dryRun') && process.env.TEST_REPLACE_MANIFEST) {
-  const path=process.env.TEST_REPLACE_MANIFEST;
-  const manifest=JSON.parse(readFileSync(path,'utf8')); manifest.environment='replaced';
-  writeFileSync(path,JSON.stringify(manifest));
-}
-if (process.env.TEST_BLOCK === tool && !args.includes('--dryRun')) { setInterval(() => {}, 1000); }
-else if (process.env.TEST_FAIL === tool && (!process.env.TEST_FAIL_ARG || args.includes(process.env.TEST_FAIL_ARG)) && (!args.includes('--dryRun') || process.env.TEST_FAIL_DRY === '1')) {
-  console.error('credential leak: mongodb://operator:secret-password@localhost/source'); process.exit(7);
-}
-else if (tool === 'mongodump') {
-  const out = args.find(a=>a.startsWith('--out=')).slice(6);
-  const uri = JSON.parse(readFileSync(args.find(a=>a.startsWith('--config=')).slice(9),'utf8')).uri;
-  const db = new URL(uri).pathname.slice(1);
-  mkdirSync(join(out, db), {recursive:true});
-  if (process.env.TEST_PRELUDE) writeFileSync(join(out,db,'prelude.json'),'{}');
-  writeFileSync(join(out, db, 'posts.bson'), 'test-bson');
-  writeFileSync(join(out, db, 'posts.metadata.json'), '{}');
-}
-else if (tool === 'aws' && args.includes('list-objects-v2')) console.log(process.env.TEST_OBJECTS ?? JSON.stringify([{Key:'photo.txt',Size:4}]));
-else if (tool === 'aws' && args.includes('sync') && args.some(a=>a.startsWith('s3://')) && !args.includes('--dryrun')) {
-  const source = args[args.indexOf('sync')+1];
-  const destination = args[args.indexOf('sync')+2];
-  if (source.startsWith('s3://')) writeFileSync(join(destination,'photo.txt'),'copy');
-}
-`;
+  const stub = `#!${process.execPath}\n${await readFile(new URL("./fake-tool.mjs", import.meta.url), "utf8")}`;
   for (const tool of ["mongodump", "mongorestore", "mongosh", "aws"]) {
     const path = join(bin, tool);
     await writeFile(path, stub);

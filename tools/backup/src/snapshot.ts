@@ -66,18 +66,40 @@ export async function inventory(root: string): Promise<Entry[]> {
   return files;
 }
 
-export async function validateSnapshot(root: string): Promise<Manifest> {
-  await assertRealPath(root);
-  const manifestPath = join(root, "manifest.json");
-  const stat = await lstat(manifestPath);
-  if (!stat.isFile() || stat.size > 16 * 1024 * 1024)
-    throw new Error("Invalid snapshot manifest.");
-  let value: unknown;
-  try {
-    value = JSON.parse(await readFile(manifestPath, "utf8"));
-  } catch {
-    throw new Error("Cannot parse snapshot manifest.");
-  }
+function validateNamespace(path: string, database: string) {
+  const parts = path.split("/");
+  if (parts[0] === "database") {
+    if (parts.length === 2 && parts[1] === "prelude.json") return;
+    if (
+      parts.length !== 3 ||
+      parts[1] !== database ||
+      !/\.(bson|metadata\.json)$/.test(parts[2])
+    )
+      throw new Error(
+        "Snapshot contains an unexpected database namespace or dump file.",
+      );
+  } else if (parts[0] !== "media" || parts.length < 2)
+    throw new Error("Snapshot contains an unexpected file.");
+}
+
+function parseEntry(value: unknown, database: string): Entry {
+  if (!value || typeof value !== "object")
+    throw new Error("Invalid snapshot file inventory.");
+  const file = value as Entry;
+  if (
+    typeof file.path !== "string" ||
+    !safeRelative(file.path) ||
+    !Number.isSafeInteger(file.size) ||
+    file.size < 0 ||
+    typeof file.sha256 !== "string" ||
+    !/^[a-f0-9]{64}$/.test(file.sha256)
+  )
+    throw new Error("Invalid snapshot file inventory.");
+  validateNamespace(file.path, database);
+  return { path: file.path, size: file.size, sha256: file.sha256 };
+}
+
+function parseManifest(value: unknown): Manifest {
   if (!value || typeof value !== "object")
     throw new Error("Invalid snapshot manifest.");
   const m = value as Manifest;
@@ -90,77 +112,96 @@ export async function validateSnapshot(root: string): Promise<Manifest> {
     typeof m.createdAt !== "string" ||
     !Number.isFinite(Date.parse(m.createdAt)) ||
     !Array.isArray(m.files)
-  ) {
+  )
     throw new Error("Unsupported or incomplete snapshot manifest.");
-  }
-  const paths = new Set<string>();
-  for (const file of m.files) {
-    if (
-      !file ||
-      typeof file.path !== "string" ||
-      !safeRelative(file.path) ||
-      !Number.isSafeInteger(file.size) ||
-      file.size < 0 ||
-      typeof file.sha256 !== "string" ||
-      !/^[a-f0-9]{64}$/.test(file.sha256) ||
-      paths.has(file.path)
-    )
-      throw new Error("Invalid snapshot file inventory.");
-    paths.add(file.path);
-    const parts = file.path.split("/");
-    if (parts[0] === "database") {
-      if (parts.length === 2 && parts[1] === "prelude.json") continue;
-      if (
-        parts.length !== 3 ||
-        parts[1] !== m.database ||
-        !/\.(bson|metadata\.json)$/.test(parts[2])
-      )
-        throw new Error(
-          "Snapshot contains an unexpected database namespace or dump file.",
-        );
-    } else if (parts[0] !== "media" || parts.length < 2)
-      throw new Error("Snapshot contains an unexpected file.");
-  }
+  const files = m.files
+    .map((file) => parseEntry(file, m.database))
+    .sort((a, b) => a.path.localeCompare(b.path, "en"));
+  if (new Set(files.map((file) => file.path)).size !== files.length)
+    throw new Error("Invalid snapshot file inventory.");
   if (
-    !m.files.some(
-      (f) =>
-        f.path.startsWith(`database/${m.database}/`) &&
-        f.path.endsWith(".bson"),
+    !files.some(
+      (file) =>
+        file.path.startsWith(`database/${m.database}/`) &&
+        file.path.endsWith(".bson"),
     )
   )
     throw new Error(
       "Snapshot has no database collections; refusing destructive recovery.",
     );
-  for (const dir of ["database", `database/${m.database}`, "media"]) {
+  // Return the schema fields in a stable order. JSON object key order and
+  // inventory ordering do not change snapshot contents or identity.
+  return {
+    version: 1,
+    environment: m.environment,
+    database: m.database,
+    createdAt: m.createdAt,
+    files,
+  };
+}
+
+async function readManifest(root: string): Promise<Manifest> {
+  const path = join(root, "manifest.json");
+  const stat = await lstat(path);
+  if (!stat.isFile() || stat.size > 16 * 1024 * 1024)
+    throw new Error("Invalid snapshot manifest.");
+  let value: unknown;
+  try {
+    value = JSON.parse(await readFile(path, "utf8"));
+  } catch {
+    throw new Error("Cannot parse snapshot manifest.");
+  }
+  return parseManifest(value);
+}
+
+async function validateDirectories(root: string, manifest: Manifest) {
+  const allowed = new Set([
+    "database",
+    `database/${manifest.database}`,
+    "media",
+  ]);
+  for (const dir of allowed) {
     if (!(await lstat(join(root, dir))).isDirectory())
       throw new Error("Snapshot directory is missing.");
   }
-  const actual = (await inventory(root)).filter(
-    (f) => f.path !== "manifest.json",
-  );
-  const expected = [...m.files].sort((a, b) =>
-    a.path.localeCompare(b.path, "en"),
-  );
-  actual.sort((a, b) => a.path.localeCompare(b.path, "en"));
-  if (JSON.stringify(actual) !== JSON.stringify(expected))
-    throw new Error("Snapshot inventory/checksum mismatch; recovery refused.");
   // Empty directories can hide incomplete staging data too.
-  async function checkDirectories(relative: string) {
+  async function visit(relative: string) {
     for (const name of await readdir(join(root, relative))) {
       const path = relative ? `${relative}/${name}` : name;
       if ((await lstat(join(root, path))).isDirectory()) {
         if (
-          !["database", `database/${m.database}`, "media"].includes(path) &&
+          !allowed.has(path) &&
           !(
             path.startsWith("media/") &&
-            m.files.some((f) => f.path.startsWith(`${path}/`))
+            manifest.files.some((file) => file.path.startsWith(`${path}/`))
           )
         )
           throw new Error("Snapshot contains an unexpected directory.");
-        await checkDirectories(path);
+        await visit(path);
       }
     }
   }
-  await checkDirectories("");
-  return m;
+  await visit("");
+}
+
+export async function validateSnapshot(root: string): Promise<Manifest> {
+  await assertRealPath(root);
+  const manifest = await readManifest(root);
+  const actual = (await inventory(root))
+    .filter((file) => file.path !== "manifest.json")
+    .sort((a, b) => a.path.localeCompare(b.path, "en"));
+  if (
+    actual.length !== manifest.files.length ||
+    actual.some((file, index) => {
+      const expected = manifest.files[index];
+      return (
+        file.path !== expected.path ||
+        file.size !== expected.size ||
+        file.sha256 !== expected.sha256
+      );
+    })
+  )
+    throw new Error("Snapshot inventory/checksum mismatch; recovery refused.");
+  await validateDirectories(root, manifest);
+  return manifest;
 }

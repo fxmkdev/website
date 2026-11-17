@@ -96,8 +96,15 @@ pnpm data restore --env staging --input .backups/production-2026-11-17
 
 Restore validates the complete inventory, checksums, dump namespace, tool
 availability, database connectivity, and bucket access before asking for
-confirmation. Dry run performs validation and read-only destination checks; it
-cannot guarantee future write permissions or successful data import.
+confirmation. The preview lists and counts destination collections to drop,
+snapshot collections to import, every media object to upload (including
+same-size replacements), and destination-only objects to delete. Names are
+JSON-quoted so control characters cannot distort the displayed plan.
+
+Dry run performs validation and read-only destination checks; it cannot
+guarantee future write permissions or successful data import. Keep writes paused
+while reviewing the plan and restoring, since destination data may otherwise
+change after the preview.
 
 The interactive prompt requires typing the exact destination environment.
 Automation must supply that same name explicitly:

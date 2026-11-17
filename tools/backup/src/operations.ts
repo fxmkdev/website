@@ -11,7 +11,12 @@ import {
   safeRelative,
   validateSnapshot,
 } from "./snapshot.ts";
-import type { Manifest } from "./snapshot.ts";
+import type { Entry, Manifest } from "./snapshot.ts";
+import {
+  createRestorePlan,
+  printRestorePlan,
+  printRestoreTarget,
+} from "./plan.ts";
 
 async function withMongoConfig<T>(
   uri: string,
@@ -20,8 +25,7 @@ async function withMongoConfig<T>(
   const directory = await mkdtemp(join(tmpdir(), "website-mongo-"));
   const path = join(directory, "connection.yml");
   try {
-    // JSON is also YAML. Database Tools reads this protected file without putting
-    // the credentialed URI in process arguments or diagnostic output.
+    // JSON is also YAML. Keep credentials out of process arguments and logs.
     await writeFile(path, JSON.stringify({ uri }), { mode: 0o600 });
     return await action(path);
   } finally {
@@ -58,6 +62,7 @@ async function sourceObjects(
   const folded = new Set<string>();
   for (const obj of objects) {
     if (
+      !obj ||
       typeof obj.Key !== "string" ||
       !safeRelative(obj.Key) ||
       !Number.isSafeInteger(obj.Size) ||
@@ -78,12 +83,7 @@ async function sourceObjects(
   return objects;
 }
 
-export async function backup(
-  env: Environment,
-  output: string,
-  signal: AbortSignal,
-) {
-  const root = resolve(output);
+async function validateOutput(root: string) {
   await assertRealPath(dirname(root));
   try {
     await lstat(root);
@@ -92,85 +92,118 @@ export async function backup(
     if (!(error instanceof Error && "code" in error && error.code === "ENOENT"))
       throw error;
   }
+}
+
+async function dumpDatabase(
+  env: Environment,
+  staging: string,
+  signal: AbortSignal,
+) {
+  console.log("Backing up MongoDB…");
+  await withMongoConfig(env.uri, (config) =>
+    run(
+      "mongodump",
+      [`--config=${config}`, `--out=${join(staging, "database")}`],
+      signal,
+    ),
+  );
+  // Normalize newer tools' single-database prelude to the dump root so
+  // namespace-based mongorestore finds the source server/tool metadata.
+  try {
+    await rename(
+      join(staging, "database", env.database, "prelude.json"),
+      join(staging, "database", "prelude.json"),
+    );
+  } catch (error) {
+    if (!(error instanceof Error && "code" in error && error.code === "ENOENT"))
+      throw error;
+  }
+}
+
+function validateMediaCopy(files: Entry[], objects: ObjectEntry[]) {
+  const mediaFiles = new Map(
+    files
+      .filter((file) => file.path.startsWith("media/"))
+      .map((file) => [file.path.slice("media/".length), file.size]),
+  );
+  if (
+    mediaFiles.size !== objects.length ||
+    objects.some((object) => mediaFiles.get(object.Key) !== object.Size)
+  )
+    throw new Error(
+      "S3 backup does not match the source inventory; pause writes and retry.",
+    );
+}
+
+async function createSnapshot(
+  env: Environment,
+  staging: string,
+  objects: ObjectEntry[],
+  signal: AbortSignal,
+) {
+  const media = join(staging, "media");
+  await mkdir(media, { mode: 0o700 });
+  await dumpDatabase(env, staging, signal);
+  console.log("Backing up S3…");
+  await aws(
+    env,
+    [
+      "s3",
+      "sync",
+      `s3://${env.bucket}`,
+      media,
+      "--no-follow-symlinks",
+      "--only-show-errors",
+    ],
+    signal,
+  );
+  const files = await inventory(staging);
+  validateMediaCopy(files, objects);
+  const manifest: Manifest = {
+    version: 1,
+    environment: env.name,
+    database: env.database,
+    createdAt: new Date().toISOString(),
+    files,
+  };
+  await writeFile(
+    join(staging, "manifest.json"),
+    JSON.stringify(manifest, null, 2) + "\n",
+    { mode: 0o600 },
+  );
+  await validateSnapshot(staging);
+}
+
+async function publishSnapshot(
+  root: string,
+  staging: string,
+  signal: AbortSignal,
+) {
+  signal.throwIfAborted();
+  await rename(join(staging, "database"), join(root, "database"));
+  await rename(join(staging, "media"), join(root, "media"));
+  // The completion manifest is published last. Failed backups are unusable.
+  signal.throwIfAborted();
+  await rename(join(staging, "manifest.json"), join(root, "manifest.json"));
+}
+
+export async function backup(
+  env: Environment,
+  output: string,
+  signal: AbortSignal,
+) {
+  const root = resolve(output);
+  await validateOutput(root);
+  // Print the selected resource identities before any network access.
   console.log(describe(env));
   await preflight(env, signal, false);
   const objects = await sourceObjects(env, signal);
-  // Exclusive reservation: another invocation cannot overwrite this path.
+  // Exclusive reservation prevents another invocation overwriting this path.
   await mkdir(root, { mode: 0o700 });
   const staging = await mkdtemp(join(root, ".incomplete-"));
   try {
-    const media = join(staging, "media");
-    await mkdir(media, { mode: 0o700 });
-    console.log("Backing up MongoDB…");
-    await withMongoConfig(env.uri, (config) =>
-      run(
-        "mongodump",
-        [`--config=${config}`, `--out=${join(staging, "database")}`],
-        signal,
-      ),
-    );
-    // Newer mongodump places prelude.json inside a single-database dump.
-    // Normalize it to the dump root so namespace-based mongorestore finds it.
-    try {
-      await rename(
-        join(staging, "database", env.database, "prelude.json"),
-        join(staging, "database", "prelude.json"),
-      );
-    } catch (error) {
-      if (
-        !(error instanceof Error && "code" in error && error.code === "ENOENT")
-      )
-        throw error;
-    }
-    console.log("Backing up S3…");
-    await aws(
-      env,
-      [
-        "s3",
-        "sync",
-        `s3://${env.bucket}`,
-        media,
-        "--no-follow-symlinks",
-        "--only-show-errors",
-      ],
-      signal,
-    );
-    const files = await inventory(staging);
-    const mediaFiles = files.filter((f) => f.path.startsWith("media/"));
-    if (
-      mediaFiles.length !== objects.length ||
-      objects.some(
-        (o) =>
-          !mediaFiles.some(
-            (f) => f.path === `media/${o.Key}` && f.size === o.Size,
-          ),
-      )
-    )
-      throw new Error(
-        "S3 backup does not match the source inventory; pause writes and retry.",
-      );
-    const manifest: Manifest = {
-      version: 1,
-      environment: env.name,
-      database: env.database,
-      createdAt: new Date().toISOString(),
-      files,
-    };
-    await writeFile(
-      join(staging, "manifest.json"),
-      JSON.stringify(manifest, null, 2) + "\n",
-      { mode: 0o600 },
-    );
-    await validateSnapshot(staging);
-    if (signal.aborted)
-      throw new Error("Interrupted before snapshot completion.");
-    await rename(join(staging, "database"), join(root, "database"));
-    await rename(media, join(root, "media"));
-    // The completion manifest is published last. Failed backups are unusable.
-    if (signal.aborted)
-      throw new Error("Interrupted before snapshot completion.");
-    await rename(join(staging, "manifest.json"), join(root, "manifest.json"));
-    console.log(`Backup complete: ${root}`);
+    await createSnapshot(env, staging, objects, signal);
+    await publishSnapshot(root, staging, signal);
   } catch (error) {
     throw new Error(
       `Backup incomplete at ${root}; use a new output path to retry. ${error instanceof Error ? error.message : "Operation failed."}`,
@@ -179,6 +212,7 @@ export async function backup(
   } finally {
     await rm(staging, { recursive: true, force: true });
   }
+  console.log(`Backup complete: ${root}`);
 }
 
 export function restoreArgs(
@@ -229,6 +263,75 @@ export async function confirmRestore(
   }
 }
 
+async function restorePhase(phase: string, action: () => Promise<unknown>) {
+  try {
+    await action();
+  } catch (error) {
+    throw new Error(
+      `Restore failed while ${phase}. Destination may be partially changed; keep writes paused and recover from a verified snapshot. ${error instanceof Error ? error.message : "Operation failed."}`,
+      { cause: error },
+    );
+  }
+}
+
+function uploadMedia(env: Environment, root: string, signal: AbortSignal) {
+  return aws(
+    env,
+    [
+      "s3",
+      "cp",
+      join(root, "media"),
+      `s3://${env.bucket}`,
+      "--recursive",
+      "--no-follow-symlinks",
+      "--only-show-errors",
+    ],
+    signal,
+  );
+}
+
+function deleteExtraMedia(env: Environment, root: string, signal: AbortSignal) {
+  return aws(
+    env,
+    [
+      "s3",
+      "sync",
+      join(root, "media"),
+      `s3://${env.bucket}`,
+      "--delete",
+      "--no-follow-symlinks",
+      "--only-show-errors",
+    ],
+    signal,
+  );
+}
+
+async function applyRestore(
+  env: Environment,
+  root: string,
+  args: string[],
+  signal: AbortSignal,
+) {
+  console.log("Replacing MongoDB collections…");
+  await restorePhase("dropping destination collections", () =>
+    mongo(
+      env,
+      `const excluded = ${JSON.stringify(exclusions)};\nfor (const c of db.getCollectionInfos()) { if (!excluded.includes(c.name) && !c.name.startsWith("system.")) { if (!db.getCollection(c.name).drop()) throw new Error("Collection drop failed"); } }`,
+      signal,
+    ),
+  );
+  await restorePhase("restoring MongoDB", () =>
+    run("mongorestore", args, signal),
+  );
+  console.log("Replacing S3 media…");
+  await restorePhase("uploading S3 objects", () =>
+    uploadMedia(env, root, signal),
+  );
+  await restorePhase("deleting destination-only S3 objects", () =>
+    deleteExtraMedia(env, root, signal),
+  );
+}
+
 export async function restore(
   env: Environment,
   input: string,
@@ -237,85 +340,25 @@ export async function restore(
 ) {
   const root = resolve(input);
   const manifest = await validateSnapshot(root);
-  console.log(
-    `Snapshot: ${manifest.environment}/${manifest.database}, ${manifest.createdAt}\n${describe(env)}\nReplace all application collections except ${exclusions.join(", ")}.\nUpload all snapshot media and DELETE destination-only S3 objects.\nPause application writes; this operation has no automatic rollback.`,
-  );
+  printRestoreTarget(env, manifest);
   await preflight(env, signal, true);
   await withMongoConfig(await restoreConnectionUri(env.uri), async (config) => {
     const args = restoreArgs(manifest, env, root, config);
     await run("mongorestore", [...args, "--dryRun"], signal);
-    await aws(
-      env,
-      [
-        "s3",
-        "sync",
-        join(root, "media"),
-        `s3://${env.bucket}`,
-        "--delete",
-        "--no-follow-symlinks",
-        "--dryrun",
-      ],
-      signal,
-    );
+    printRestorePlan(await createRestorePlan(env, manifest, signal));
     if (options.dryRun) {
-      console.log(
-        "Dry run complete: database namespaces validated; all snapshot media will be uploaded, and destination-only objects deleted. No data changed.",
-      );
+      console.log("Dry run complete: no data changed.");
       return;
     }
     await confirmRestore(env.name, options.confirm, signal);
-    // Recheck after the prompt so accidental edits while reviewing cannot turn
-    // a validated snapshot into an incomplete destructive restore.
+    // Revalidate after the prompt so a replaced snapshot cannot change the
+    // contents or namespace of a previously reviewed restore.
     const rechecked = await validateSnapshot(root);
     if (JSON.stringify(rechecked) !== JSON.stringify(manifest))
       throw new Error(
         "Snapshot changed during confirmation; recovery refused.",
       );
-    let phase = "dropping destination collections";
-    try {
-      console.log("Replacing MongoDB collections…");
-      await mongo(
-        env,
-        `const excluded = ${JSON.stringify(exclusions)};\nfor (const c of db.getCollectionInfos()) { if (!excluded.includes(c.name) && !c.name.startsWith("system.")) { if (!db.getCollection(c.name).drop()) throw new Error("Collection drop failed"); } }`,
-        signal,
-      );
-      phase = "restoring MongoDB";
-      await run("mongorestore", args, signal);
-      phase = "uploading S3 objects";
-      console.log("Replacing S3 media…");
-      await aws(
-        env,
-        [
-          "s3",
-          "cp",
-          join(root, "media"),
-          `s3://${env.bucket}`,
-          "--recursive",
-          "--no-follow-symlinks",
-          "--only-show-errors",
-        ],
-        signal,
-      );
-      phase = "deleting destination-only S3 objects";
-      await aws(
-        env,
-        [
-          "s3",
-          "sync",
-          join(root, "media"),
-          `s3://${env.bucket}`,
-          "--delete",
-          "--no-follow-symlinks",
-          "--only-show-errors",
-        ],
-        signal,
-      );
-    } catch (error) {
-      throw new Error(
-        `Restore failed while ${phase}. Destination may be partially changed; keep writes paused and recover from a verified snapshot. ${error instanceof Error ? error.message : "Operation failed."}`,
-        { cause: error },
-      );
-    }
+    await applyRestore(env, root, args, signal);
     console.log("Restore complete.");
   });
 }
