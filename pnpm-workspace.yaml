@@ -11,6 +11,22 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - '@types/node@24.13.1'
   - '@fxmk/releaser@0.5.5'
+  - '@payloadcms/db-mongodb@3.94.0'
+  - '@payloadcms/graphql@3.94.0'
+  - '@payloadcms/live-preview-react@3.94.0'
+  - '@payloadcms/live-preview@3.94.0'
+  - '@payloadcms/next@3.94.0'
+  - '@payloadcms/plugin-cloud-storage@3.94.0'
+  - '@payloadcms/plugin-form-builder@3.94.0'
+  - '@payloadcms/plugin-nested-docs@3.94.0'
+  - '@payloadcms/plugin-redirects@3.94.0'
+  - '@payloadcms/plugin-search@3.94.0'
+  - '@payloadcms/plugin-seo@3.94.0'
+  - '@payloadcms/richtext-lexical@3.94.0'
+  - '@payloadcms/storage-s3@3.94.0'
+  - '@payloadcms/translations@3.94.0'
+  - '@payloadcms/ui@3.94.0'
+  - payload@3.94.0
 
 overrides:
   "@humanfs/node": 0.16.8
