@@ -214,8 +214,12 @@ Payload also trusts `SERVER_URL` for admin authentication. Missing
 HTTPS frontends use `SameSite=None; Secure` CMS user cookies so authenticated
 preview requests can cross sites. HTTP localhost development uses `SameSite=Lax`
 without Secure. Sign in again after changing these settings to replace existing
-cookies. Browsers that block cross-site cookies may still prevent authenticated
-live updates; the frontend does not proxy these requests.
+cookies. Page and Post live updates go through the frontend's
+`/api/live-preview` endpoint using `PREVIEW_KEY`; the frontend authenticates to
+the CMS with its server-side API key. Browser cookies are not required for those
+updates. The proxy only supports Page and Post reads and does not cache results.
+If an update fails, the preview keeps its last valid content and displays an
+error.
 
 See [Live preview docs](https://payloadcms.com/docs/live-preview/overview) for
 more details.
