@@ -11,7 +11,7 @@ import { Code } from "./code";
 import { ArrowLeftIcon } from "~/components/icons";
 import type { Route } from "./+types/route";
 import type { SerializeFromLoader } from "~/utils/types";
-import { type loader as rootLoader } from "~/root";
+import type { loader as rootLoader } from "~/root";
 import { getPageMetaDescriptors as getPageMetaDescriptors } from "~/utils/page-meta";
 import { Link } from "~/components/link";
 import { OptInLivePreview } from "~/components/live-preview";

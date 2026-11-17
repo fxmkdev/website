@@ -7,11 +7,11 @@ import { FormBlock } from "../../blocks/Form/config";
 import { MediaBlock } from "../../blocks/MediaBlock/config";
 import { hero } from "@/heros/config";
 import { slugField } from "@/fields/slug";
+import { seoImageField } from "@/fields/seo-image";
 import { populatePublishedAt } from "../../hooks/populatePublishedAt";
 
 import {
   MetaDescriptionField,
-  MetaImageField,
   MetaTitleField,
   OverviewField,
   PreviewField,
@@ -93,15 +93,7 @@ export const Pages: CollectionConfig<"pages"> = {
             MetaTitleField({
               hasGenerateFn: true,
             }),
-            MetaImageField({
-              relationTo: "media",
-              overrides: {
-                admin: {
-                  description:
-                    "Optional manual override. Leave empty to use the global Social Image Template with this document’s title.",
-                },
-              },
-            }),
+            seoImageField(),
 
             MetaDescriptionField({}),
             PreviewField({
