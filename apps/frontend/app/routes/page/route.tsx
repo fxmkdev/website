@@ -30,6 +30,7 @@ export function meta({ data, matches }: Route.MetaArgs) {
       content.meta,
       rootLoaderData.meta,
       rootLoaderData.environment,
+      content.title,
     ),
   ];
 }
