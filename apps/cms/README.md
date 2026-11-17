@@ -219,7 +219,8 @@ cookies. Page and Post live updates go through the frontend's
 the CMS with its server-side API key. Browser cookies are not required for those
 updates. The proxy only supports Page and Post reads and does not cache results.
 If an update fails, the preview keeps its last valid content and displays an
-error.
+error. Responses from older requests cannot overwrite a more recent edit or its
+error state.
 
 See [Live preview docs](https://payloadcms.com/docs/live-preview/overview) for
 more details.

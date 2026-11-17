@@ -67,6 +67,7 @@ test.each([
   () => Response.json({ errors: [{ message: "Forbidden" }] }, { status: 403 }),
   () => Response.json({ errors: [{ message: "Unexpected error" }] }),
   () => Response.json({ id: "another-document", title: "Wrong content" }),
+  () => Response.json({ id: initialData.id }),
 ])(
   "keeps content visible when a preview response fails validation",
   async (response) => {
@@ -107,3 +108,35 @@ test("retains the latest successful update after a failure and recovers", async 
   ).toBeVisible();
   await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
 });
+
+test.each([
+  () => Response.json({ ...initialData, title: "Older edit" }),
+  () =>
+    Response.json({ errors: [{ message: "Older failure" }] }, { status: 403 }),
+])(
+  "ignores an older request that finishes after the latest update",
+  async (oldResponse) => {
+    let resolveOld!: (response: Response) => void;
+    vi.mocked(fetch)
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveOld = resolve;
+          }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({ ...initialData, title: "Latest edit" }),
+      );
+    renderPreview();
+    await sendUpdate();
+    await sendUpdate();
+    expect(
+      await screen.findByRole("heading", { name: "Latest edit" }),
+    ).toBeVisible();
+    await act(async () => {
+      resolveOld(oldResponse());
+    });
+    expect(screen.getByRole("heading", { name: "Latest edit" })).toBeVisible();
+    expect(screen.queryByRole("alert")).toBeNull();
+  },
+);
