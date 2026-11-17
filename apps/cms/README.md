@@ -195,8 +195,33 @@ For more details on how to extend this functionality, see the official
 
 ## Live preview
 
-In addition to draft previews you can also enable live preview to view your end
-resulting page as you're editing content with full support for SSR rendering.
+Pages and Posts support both draft preview and live preview in the admin editor.
+Preview opens the latest draft; live preview updates the rendered content while
+you edit. Pages use their `pathname`, and Posts use `/articles/:slug`.
+
+Set `FRONTEND_BASE_URL` in the CMS to the frontend origin, and configure the
+same `PREVIEW_KEY` in both apps. The frontend also needs its usual CMS URL and
+API key. Preview requests validate the key and fetch drafts without reading or
+writing the published-content cache. Header, Footer, and Meta globals are not
+live-previewed.
+
+Set the CMS `SERVER_URL` to its public origin as well (locally,
+`http://localhost:3001`, with `FRONTEND_BASE_URL=http://localhost:3000`). The
+CMS allows only the configured frontend origin for credentialed CORS and CSRF;
+Payload also trusts `SERVER_URL` for admin authentication. Missing
+`FRONTEND_BASE_URL` grants no additional origin access.
+
+HTTPS frontends use `SameSite=None; Secure` CMS user cookies so authenticated
+preview requests can cross sites. HTTP localhost development uses `SameSite=Lax`
+without Secure. Sign in again after changing these settings to replace existing
+cookies. Page and Post live updates go through the frontend's
+`/api/live-preview` endpoint using `PREVIEW_KEY`; the frontend authenticates to
+the CMS with its server-side API key. Browser cookies are not required for those
+updates. The proxy only supports Page and Post reads and does not cache results.
+If an update fails, the preview keeps its last valid content and displays an
+error. Responses from older requests cannot overwrite a more recent edit or its
+error state.
+
 See [Live preview docs](https://payloadcms.com/docs/live-preview/overview) for
 more details.
 

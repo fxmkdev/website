@@ -1,11 +1,11 @@
 import fs from "fs/promises";
-import {
-  type Footer,
-  type Header,
-  type Meta,
-  type Page,
-  type Post,
-  type Redirect,
+import type {
+  Footer,
+  Header,
+  Meta,
+  Page,
+  Post,
+  Redirect,
 } from "@fxmk/payload-types";
 import path from "path";
 import { PAGE_DEPTH, POST_DEPTH } from "./cms-data";
@@ -174,17 +174,26 @@ export async function getFooter() {
   return footer;
 }
 
-export async function tryGetPage(pathname: string) {
+export async function tryGetPage(
+  pathname: string,
+  isPreviewMode: boolean = false,
+) {
+  const queryParams: Record<string, unknown> = {
+    "where[pathname][equals]": pathname,
+    limit: 1,
+  };
+
+  if (!isPreviewMode) {
+    queryParams["where[_status][equals]"] = "published";
+  }
+
   return await getData<{ docs: Page[] }, Page>(
     `pages`,
     `pages_${pathname.replaceAll("/", ":")}`,
     PAGE_DEPTH,
-    {
-      "where[pathname][equals]": pathname,
-      "where[_status][equals]": "published",
-      limit: 1,
-    },
+    queryParams,
     (data) => (data && data.docs.length > 0 ? data.docs[0] : null),
+    isPreviewMode,
   );
 }
 

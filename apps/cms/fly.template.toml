@@ -22,6 +22,7 @@ primary_region = '$FLY_PRIMARY_REGION'
   release_command = "sh -c 'cd /app/apps/cms && NODE_OPTIONS=--no-deprecation ./node_modules/.bin/payload migrate'"
 
 [env]
+  SERVER_URL = '$SERVER_URL'
   MEDIA_S3_REGION = '$MEDIA_S3_REGION'
   MEDIA_S3_BUCKET = '$MEDIA_S3_BUCKET'
   CACHE_REFRESH_TARGET_TYPE = '$CACHE_REFRESH_TARGET_TYPE'

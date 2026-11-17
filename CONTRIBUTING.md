@@ -98,6 +98,14 @@ Keep descriptions concise, imperative, and behavior-focused.
   applied changes to that PR branch unless explicitly instructed otherwise.
 - After you address a pull request comment, resolve that conversation in the PR.
 
+## Deployment Verification
+
+Preview deployments explicitly allocate shared IPv4 and public IPv6 addresses.
+Deployments must pass public HTTPS checks for the frontend `/version` and CMS
+`/api/users/me` endpoints within five minutes. A successful Fly deployment alone
+does not establish public reachability. Keep the Fly CLI version aligned across
+the build, deploy, and preview-cleanup workflows.
+
 ## Documentation Expectations
 
 - Update relevant docs when introducing new behavior or conventions.

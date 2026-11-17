@@ -16,7 +16,7 @@ on:
         default: true
 
 env:
-  FLYCTL_VERSION: 0.4.52
+  FLYCTL_VERSION: 0.5.11
   FRONTEND_INTERNAL_PORT: 3000
 
 jobs:
@@ -48,6 +48,8 @@ jobs:
           flyctl apps destroy --yes $APP_NAME || true
 
           flyctl apps create --name $APP_NAME --org ${{ vars.FLY_ORG }}
+          flyctl ips allocate-v4 --shared --app "$APP_NAME"
+          flyctl ips allocate-v6 --app "$APP_NAME"
           flyctl secrets set \
             PAYLOAD_CMS_API_KEY=${{ secrets.PREVIEW_PAYLOAD_CMS_API_KEY }} \
             PREVIEW_KEY="${{ secrets.PREVIEW_PREVIEW_KEY }}" \
@@ -107,6 +109,16 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
+      - name: Verify public frontend endpoint
+        env:
+          PUBLIC_URL:
+            ${{ inputs.environment == 'preview' && format('https://{0}.fly.dev',
+            steps.create-app.outputs.app_name) || format('https://{0}',
+            vars.CANONICAL_HOSTNAME) }}
+        run:
+          bash .github/scripts/check-public-endpoint.sh "$PUBLIC_URL/version"
+          version
+
   cms-deploy:
     name: "CMS: Deploy"
     runs-on: ubuntu-latest
@@ -135,6 +147,8 @@ jobs:
           flyctl apps destroy --yes $APP_NAME || true
 
           flyctl apps create --name $APP_NAME --org ${{ vars.FLY_ORG }}
+          flyctl ips allocate-v4 --shared --app "$APP_NAME"
+          flyctl ips allocate-v6 --app "$APP_NAME"
           flyctl secrets set \
             DATABASE_URI="${{ secrets.PREVIEW_DATABASE_URI }}" \
             PAYLOAD_SECRET=${{ secrets.PREVIEW_PAYLOAD_SECRET }} \
@@ -173,6 +187,9 @@ jobs:
             ${{ inputs.environment == 'preview' && format('https://{0}.fly.dev',
             steps.create-app.outputs.frontend_app_name) ||
             vars.FRONTEND_BASE_URL }}
+          SERVER_URL:
+            ${{ inputs.environment == 'preview' && format('https://{0}.fly.dev',
+            steps.create-app.outputs.app_name) || vars.SERVER_URL }}
           IMAGEKIT_BASE_URL: ${{ vars.IMAGEKIT_BASE_URL }}
       - name: Deploy CMS
         run: |
@@ -201,3 +218,11 @@ jobs:
           done
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - name: Verify public CMS endpoint
+        env:
+          PUBLIC_URL:
+            ${{ inputs.environment == 'preview' && format('https://{0}.fly.dev',
+            steps.create-app.outputs.app_name) || vars.SERVER_URL }}
+        run:
+          bash .github/scripts/check-public-endpoint.sh
+          "${PUBLIC_URL%/}/api/users/me" cms
