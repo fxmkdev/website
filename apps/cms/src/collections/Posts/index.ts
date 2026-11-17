@@ -2,12 +2,12 @@ import type { CollectionConfig } from "payload";
 
 import {
   MetaDescriptionField,
-  MetaImageField,
   MetaTitleField,
   OverviewField,
   PreviewField,
 } from "@payloadcms/plugin-seo/fields";
 import { slugField } from "@/fields/slug";
+import { seoImageField } from "@/fields/seo-image";
 import { refreshCacheHook } from "@/hooks/refresh-cache-hook";
 import { getCollectionItemCacheKey } from "@/utilities/frontend-cache";
 import { contentFields } from "./content";
@@ -100,15 +100,7 @@ export const Posts: CollectionConfig<"posts"> = {
             MetaTitleField({
               hasGenerateFn: true,
             }),
-            MetaImageField({
-              relationTo: "media",
-              overrides: {
-                admin: {
-                  description:
-                    "Optional manual override. Leave empty to use the global Social Image Template with this document’s title.",
-                },
-              },
-            }),
+            seoImageField(),
 
             MetaDescriptionField({}),
             PreviewField({
