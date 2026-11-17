@@ -95,6 +95,12 @@ export const Pages: CollectionConfig<"pages"> = {
             }),
             MetaImageField({
               relationTo: "media",
+              overrides: {
+                admin: {
+                  description:
+                    "Optional manual override. Leave empty to use the global Social Image Template with this document’s title.",
+                },
+              },
             }),
 
             MetaDescriptionField({}),
