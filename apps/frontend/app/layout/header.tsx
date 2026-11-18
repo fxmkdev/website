@@ -17,7 +17,7 @@ import { NavLink, useLocation } from "react-router";
 import { ChevronDownIcon, CloseIcon } from "../components/icons";
 import { Container } from "../components/container";
 
-import { type Header, type Header as HeaderType } from "@fxmk/payload-types";
+import type { Header, Header as HeaderType } from "@fxmk/payload-types";
 import { getLinkHref } from "../utils/links";
 import { MediaImage } from "~/components/media-image";
 import { Link } from "~/components/link";
