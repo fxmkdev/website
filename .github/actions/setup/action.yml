@@ -9,5 +9,6 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
+        check-latest: true
         cache: "pnpm"
         cache-dependency-path: pnpm-lock.yaml
