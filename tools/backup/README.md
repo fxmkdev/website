@@ -4,6 +4,10 @@ This CLI replaces the root `backup.sh` and `restore.sh` scripts. It backs up a
 single MongoDB application database and its S3 media bucket together. All
 operations require an explicit environment; there is no default.
 
+Run `pnpm data` from the repository root. Relative `--output`, `--input`, and
+`--config-dir` paths resolve from that directory, so snapshots under `.backups/`
+remain covered by the repository's ignore rule.
+
 ## Prerequisites and configuration
 
 Use macOS or Linux, Node.js 24, and the repository's pinned pnpm version.

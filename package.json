@@ -11,7 +11,7 @@
     "build": "pnpm generate:types && pnpm build:generated",
     "build:generated": "pnpm --filter @fxmk/frontend build && pnpm --filter @fxmk/cms build:generated",
     "check": "pnpm generate:types && pnpm check-format && pnpm lint && pnpm typecheck:generated && pnpm test && pnpm build:generated",
-    "data": "pnpm --filter @fxmk/backup-tools cli"
+    "data": "node tools/backup/src/cli.ts"
   },
   "devDependencies": {
     "@fxmk/releaser": "^0.5.5",
