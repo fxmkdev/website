@@ -28,3 +28,8 @@ pnpm check
 Payload types are generated from the CMS and copied into `libs/payload-types`.
 Those generated files are gitignored, so run `pnpm generate:types` before
 frontend typechecks or builds in a fresh checkout.
+
+For MongoDB and S3 backup/recovery, use `pnpm data backup --env <environment>`
+and `pnpm data restore --env <environment>`. See the
+[backup CLI guide](tools/backup/README.md) for configuration, required snapshot
+paths, destructive-operation confirmation, and disposable recovery checks.
