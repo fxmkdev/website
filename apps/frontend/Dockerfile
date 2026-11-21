@@ -31,7 +31,7 @@ COPY --link apps/frontend/package.json apps/frontend/
 COPY --link libs/shared/package.json libs/shared/
 COPY --link libs/payload-types/package.json libs/payload-types/
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-    pnpm --filter @fxmk/frontend install --prod=false --frozen-lockfile --store-dir=/pnpm/store
+    pnpm --filter @fxmk/frontend --filter @fxmk/shared install --prod=false --frozen-lockfile --store-dir=/pnpm/store
 
 # Copy application code
 COPY --link apps/frontend apps/frontend

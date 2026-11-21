@@ -21,7 +21,7 @@ COPY --link package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY --link apps/cms/package.json apps/cms/
 COPY --link libs/shared/package.json libs/shared/
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-    pnpm --filter @fxmk/cms install --frozen-lockfile --store-dir=/pnpm/store
+    pnpm --filter @fxmk/cms --filter @fxmk/shared install --frozen-lockfile --store-dir=/pnpm/store
 
 # Copy application code
 COPY --link apps/cms apps/cms

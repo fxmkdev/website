@@ -34,7 +34,9 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install CMS dependencies
-        run: pnpm --filter cms install
+        run:
+          pnpm --filter @fxmk/cms --filter @fxmk/shared install
+          --frozen-lockfile
       - name: Pull CMS types
         run: pnpm --filter payload-types pull-payload-types
       - name: Upload CMS types
@@ -52,7 +54,9 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install dependencies
-        run: pnpm --filter frontend install
+        run:
+          pnpm --filter @fxmk/frontend --filter @fxmk/shared install
+          --frozen-lockfile
       - name: Run lint in frontend
         run: pnpm --filter frontend lint --max-warnings=0
 
@@ -65,9 +69,17 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install dependencies
-        run: pnpm --filter frontend install
+        run:
+          pnpm --filter @fxmk/frontend --filter @fxmk/shared install
+          --frozen-lockfile
       - name: Check format in frontend
         run: pnpm --filter frontend check-format
+      - name: Check shared renderer format
+        run: >-
+          pnpm --filter frontend exec prettier --check
+          ../../libs/shared/src/social-image.ts
+          ../../libs/shared/src/social-image-text.ts
+          ../../libs/shared/package.json
 
   frontend-typecheck:
     name: "Frontend: Typecheck"
@@ -84,9 +96,13 @@ jobs:
           name: payload-types
           path: libs/payload-types/src
       - name: Install dependencies
-        run: pnpm --filter frontend install
+        run:
+          pnpm --filter @fxmk/frontend --filter @fxmk/shared install
+          --frozen-lockfile
       - name: Run typecheck in frontend
         run: pnpm --filter frontend typecheck
+      - name: Run typecheck in shared
+        run: pnpm --filter @fxmk/shared exec tsc --noEmit --incremental false
 
   frontend-unit-tests:
     name: "Frontend: Unit Tests"
@@ -97,7 +113,9 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install dependencies
-        run: pnpm --filter frontend install
+        run:
+          pnpm --filter @fxmk/frontend --filter @fxmk/shared install
+          --frozen-lockfile
       - name: Run unit tests in frontend
         run: pnpm --filter frontend test
 
@@ -151,7 +169,9 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install dependencies
-        run: pnpm --filter cms install
+        run:
+          pnpm --filter @fxmk/cms --filter @fxmk/shared install
+          --frozen-lockfile
       - name: Run lint
         run: pnpm --filter cms lint --max-warnings=0
 
@@ -164,7 +184,9 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install dependencies
-        run: pnpm --filter cms install
+        run:
+          pnpm --filter @fxmk/cms --filter @fxmk/shared install
+          --frozen-lockfile
       - name: Check format in frontend
         run: pnpm --filter cms check-format
 
