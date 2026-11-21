@@ -167,7 +167,10 @@ test("handles document and client redirects without leaking data-request URLs", 
     [`${target.pathname}/?q=keep`, `${target.pathname}?q=keep`],
     [from, `${target.pathname}?from=cms`],
   ]) {
-    const response = await request.get(path, { maxRedirects: 0 });
+    // Use the canonical origin to isolate path/CMS redirects from hostname redirects.
+    const response = await request.get(new URL(path, canonicalOrigin).href, {
+      maxRedirects: 0,
+    });
     expect(response.status()).toBe(301);
     expect(response.headers().location).toBe(expected);
   }
@@ -185,12 +188,19 @@ test("handles document and client redirects without leaking data-request URLs", 
     ["Trailing slash", `${target.pathname}/?q=keep`],
     ["CMS redirect", from],
   ]);
-  for (const [label, suffix] of [
-    ["Trailing slash", "?q=keep"],
-    ["CMS redirect", "?from=cms"],
+  for (const [label, sourcePath, suffix] of [
+    ["Trailing slash", `${target.pathname}/`, "?q=keep"],
+    ["CMS redirect", from, "?from=cms"],
   ]) {
     await page.goto(`/articles/${post.slug}`);
+    const dataPath = sourcePath.endsWith("/")
+      ? `${sourcePath}_.data`
+      : `${sourcePath}.data`;
+    const dataResponse = page.waitForResponse(
+      (response) => new URL(response.url()).pathname === dataPath,
+    );
     await page.getByRole("link", { name: label, exact: true }).click();
+    expect((await dataResponse).ok()).toBeTruthy();
     await expect(page).toHaveURL(
       new URL(`${target.pathname}${suffix}`, canonicalOrigin).href,
     );
