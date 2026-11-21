@@ -10,7 +10,8 @@ remain covered by the repository's ignore rule.
 
 ## Prerequisites and configuration
 
-Use macOS or Linux, Node.js 24, and the repository's pinned pnpm version.
+Use macOS or Linux, Node.js 26.13.1, and the repository's pinned pnpm version.
+The supported runtime range is `>=26.13.1 <27`; Node typings stay on major 26.
 Install dependencies with `pnpm install --frozen-lockfile`. Install MongoDB
 Database Tools (`mongodump` and `mongorestore`, supporting `--config` and
 `--dryRun`), `mongosh`, and AWS CLI v2 on your PATH. Use compatible MongoDB

@@ -111,7 +111,7 @@ The frontend uses React Router 8.5.2 with SSR and the default route-module
 splitting. It was migrated through React Router 7.18.6 with all five v8 future
 flags enabled, following the
 [official migration guide](https://reactrouter.com/upgrading/v7). React 19.2.9,
-Node 24, and Vite 8 satisfy the v8 runtime requirements.
+Node 26.13.1, and Vite 8 satisfy the v8 runtime requirements.
 
 Loaders and actions receive the raw HTTP `request`, including internal `.data`
 paths and query parameters. Use their normalized `url` argument for public URLs,

@@ -4,7 +4,7 @@
   "version": "0.0.0-unknown",
   "type": "module",
   "engines": {
-    "node": ">=24 <25"
+    "node": ">=26.13.1 <27"
   },
   "scripts": {
     "cli": "node src/cli.ts",
@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/node": "^24.13.1",
+    "@types/node": "^26.6.6",
     "eslint": "^10.4.0",
     "globals": "^16.5.0",
     "prettier": "^3.8.3",
