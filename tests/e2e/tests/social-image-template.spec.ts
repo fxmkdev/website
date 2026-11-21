@@ -15,7 +15,8 @@ test("template preview reflects unsaved controls and handles missing media and i
   const email = `social-preview-${randomUUID()}@example.com`;
   const password = randomUUID();
   const user = await create("users", { email, password });
-  const context = await browser.newContext();
+  // The suite API key authenticates a different collection and cannot open admin.
+  const context = await browser.newContext({ extraHTTPHeaders: {} });
   let mediaId: string | undefined;
   try {
     const login = await context.request.post(`${cms}/api/users/login`, {
