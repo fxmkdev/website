@@ -12,6 +12,9 @@ test("template preview reflects unsaved controls and handles missing media and i
   browser,
 }) => {
   const cms = process.env.CMS_BASE_URL!;
+  const fixtureHeaders = {
+    Authorization: `api-keys API-Key ${process.env.CMS_API_KEY}`,
+  };
   const email = `social-preview-${randomUUID()}@example.com`;
   const password = randomUUID();
   const user = await create("users", { email, password });
@@ -26,6 +29,7 @@ test("template preview reflects unsaved controls and handles missing media and i
     expect(login.ok()).toBe(true);
     const filename = `social-preview-${randomUUID()}.png`;
     const upload = await context.request.post(`${cms}/api/media`, {
+      headers: fixtureHeaders,
       multipart: {
         _payload: "{}",
         file: { name: filename, mimeType: "image/png", buffer: pixel },
@@ -34,9 +38,19 @@ test("template preview reflects unsaved controls and handles missing media and i
     expect(upload.ok(), await upload.text()).toBe(true);
     mediaId = (await upload.json()).doc.id;
     const before = await (
-      await context.request.get(`${cms}/api/globals/meta`)
+      await context.request.get(`${cms}/api/globals/meta`, {
+        headers: fixtureHeaders,
+      })
     ).json();
     const page = await context.newPage();
+    await page.addLocatorHandler(
+      page.getByRole("dialog", { name: "document-locked" }),
+      async () => {
+        await page
+          .getByRole("button", { name: "Take over", exact: true })
+          .click();
+      },
+    );
     let failImage = false;
     let failMedia = false;
     await page.route("**/*", async (route) => {
@@ -74,15 +88,21 @@ test("template preview reflects unsaved controls and handles missing media and i
     await selectBase();
     const image = preview.getByRole("img", { name: "Social image preview" });
     await expect(image).toBeVisible();
-    await page.getByLabel("Font Family", { exact: true }).click();
+    await page
+      .locator("#field-socialImageTemplate__fontFamily")
+      .getByRole("combobox")
+      .click();
     await page.getByRole("option", { name: "Montserrat", exact: true }).click();
-    await page.getByLabel("Font Weight", { exact: true }).click();
+    await page
+      .locator("#field-socialImageTemplate__fontWeight")
+      .getByRole("combobox")
+      .click();
     await page.getByRole("option", { name: "Regular", exact: true }).click();
     await page
-      .getByLabel("Horizontal alignment", { exact: true })
+      .getByRole("combobox", { name: "Horizontal alignment", exact: true })
       .selectOption("right");
     await page
-      .getByLabel("Vertical alignment", { exact: true })
+      .getByRole("combobox", { name: "Vertical alignment", exact: true })
       .selectOption("top");
     await page.locator("#field-socialImageTemplate__margins__left").fill("180");
     await preview.getByLabel("Sample title").fill("Unsaved sample title");
@@ -112,7 +132,9 @@ test("template preview reflects unsaved controls and handles missing media and i
         }),
       );
     const after = await (
-      await context.request.get(`${cms}/api/globals/meta`)
+      await context.request.get(`${cms}/api/globals/meta`, {
+        headers: fixtureHeaders,
+      })
     ).json();
     expect(after.socialImageTemplate).toEqual(before.socialImageTemplate);
     expect(JSON.stringify(after)).not.toContain("Unsaved sample title");
@@ -133,15 +155,21 @@ test("template preview reflects unsaved controls and handles missing media and i
     );
     await expect(preview.getByLabel("Sample title")).toBeEditable();
   } finally {
-    if (mediaId)
-      expect(
-        (await context.request.delete(`${cms}/api/media/${mediaId}`)).ok(),
-      ).toBe(true);
     await context.close();
-    const cleanup = await fetch(`${cms}/api/users/${user.id}`, {
-      method: "DELETE",
-      headers: { Authorization: `api-keys API-Key ${process.env.CMS_API_KEY}` },
-    });
-    expect(cleanup.ok).toBe(true);
+    const cleanup = await Promise.all([
+      ...(mediaId
+        ? [
+            fetch(`${cms}/api/media/${mediaId}`, {
+              method: "DELETE",
+              headers: fixtureHeaders,
+            }),
+          ]
+        : []),
+      fetch(`${cms}/api/users/${user.id}`, {
+        method: "DELETE",
+        headers: fixtureHeaders,
+      }),
+    ]);
+    for (const response of cleanup) expect(response.ok).toBe(true);
   }
 });
