@@ -11,6 +11,7 @@ function update(body: unknown = requestBody, key = "preview+key") {
   const url = new URL("https://frontend.example/api/live-preview");
   url.searchParams.set("previewKey", key);
   return action({
+    url,
     request: new Request(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

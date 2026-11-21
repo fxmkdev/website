@@ -7,10 +7,10 @@ import {
 import { tryGetPage, tryGetRedirect } from "./cms-data.server";
 import { getLinkHref } from "./links";
 
-export async function handleIncomingRequest(request: Request) {
-  const url = getRequestUrl(request);
+export async function handleIncomingRequest(request: Request, routeUrl: URL) {
+  const url = getRequestUrl(request, routeUrl);
 
-  redirectIfNonCanonicalHostname(request);
+  redirectIfNonCanonicalHostname(request, routeUrl);
   redirectIfPathnameEndsWithSlash(url);
 
   const pageUrl = toRelativeUrl(url);
@@ -32,9 +32,11 @@ export async function handleIncomingRequest(request: Request) {
   return { pageUrl };
 }
 
-function redirectIfNonCanonicalHostname(request: Request) {
-  const canonicalRequestUrl = getCanonicalRequestUrl(request);
-  if (getRequestUrl(request).hostname !== canonicalRequestUrl.hostname) {
+function redirectIfNonCanonicalHostname(request: Request, routeUrl: URL) {
+  const canonicalRequestUrl = getCanonicalRequestUrl(request, routeUrl);
+  if (
+    getRequestUrl(request, routeUrl).hostname !== canonicalRequestUrl.hostname
+  ) {
     throw redirect(canonicalRequestUrl.href, { status: 301 });
   }
 }

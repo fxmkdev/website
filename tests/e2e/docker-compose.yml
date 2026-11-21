@@ -1,6 +1,10 @@
 services:
   frontend:
     image: ${FRONTEND_IMAGE}
+    networks:
+      default:
+        aliases:
+          - canonical.localhost
     ports:
       - "3000:3000"
     environment:
@@ -24,7 +28,7 @@ services:
       MEDIA_S3_ACCESS_KEY_ID: ${MEDIA_S3_ACCESS_KEY_ID}
       MEDIA_S3_SECRET_ACCESS_KEY: ${MEDIA_S3_SECRET_ACCESS_KEY}
       CACHE_REFRESH_TARGET_TYPE: single
-      CACHE_REFRESH_TARGET: http://frontend:3000
+      CACHE_REFRESH_TARGET_ARG: http://canonical.localhost:3000
       FRONTEND_BASE_URL: http://canonical.localhost:3000
       IMAGEKIT_BASE_URL: ${IMAGEKIT_BASE_URL}
       OPENAI_API_KEY: ${OPENAI_API_KEY}

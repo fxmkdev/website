@@ -3,9 +3,10 @@ import { expect, test } from "@playwright/test";
 import { getPreviewAccess } from "../../../apps/cms/src/utilities/preview-access";
 import { create, createPage } from "../common/cms";
 
-// These origins match the CMS configuration in docker-compose.yml.
-const frontendOrigin = "http://canonical.localhost:3000";
-const cmsOrigin = "http://localhost:3001";
+const frontendUrl = new URL(process.env.FRONTEND_BASE_URL!);
+frontendUrl.hostname = process.env.CANONICAL_HOSTNAME ?? "canonical.localhost";
+const frontendOrigin = frontendUrl.origin;
+const cmsOrigin = new URL(process.env.CMS_BASE_URL!).origin;
 const untrustedOrigin = "https://untrusted.example";
 
 test("preview policy normalizes origins and selects appropriate cookies", () => {

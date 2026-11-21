@@ -35,8 +35,11 @@ test("robots.txt contains correct sitemap link", async ({ request }) => {
   expect(response.ok()).toBeTruthy();
 
   const data = await response.text();
+  const canonicalUrl = new URL(process.env.FRONTEND_BASE_URL!);
+  canonicalUrl.hostname =
+    process.env.CANONICAL_HOSTNAME ?? "canonical.localhost";
   expect(data).toContain(
-    `Sitemap: http://canonical.localhost:3000/sitemap.xml`,
+    `Sitemap: ${new URL("/sitemap.xml", canonicalUrl).href}`,
   );
 });
 
@@ -50,19 +53,23 @@ test("sitemap.xml contains page and post URLs with correct lastmod dates", async
     publishedAt: "2025-01-07T00:00:00Z",
   });
 
+  const canonicalUrl = new URL(process.env.FRONTEND_BASE_URL!);
+  canonicalUrl.hostname =
+    process.env.CANONICAL_HOSTNAME ?? "canonical.localhost";
+  const canonicalOrigin = canonicalUrl.origin;
   const response = await request.get("/sitemap.xml");
   expect(response.ok()).toBeTruthy();
 
   const data = await response.text();
   expect(data).toContain(
     `<url>
-    <loc>http://canonical.localhost:3000${testPage.pathname}</loc>
+    <loc>${canonicalOrigin}${testPage.pathname}</loc>
     <lastmod>2025-01-01</lastmod>
   </url>`,
   );
   expect(data).toContain(
     `<url>
-    <loc>http://canonical.localhost:3000/articles/${testPost.slug}</loc>
+    <loc>${canonicalOrigin}/articles/${testPost.slug}</loc>
     <lastmod>2025-01-07</lastmod>
   </url>`,
   );

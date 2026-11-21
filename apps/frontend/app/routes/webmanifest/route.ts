@@ -4,10 +4,10 @@ import type { Route } from "./+types/route";
 import { imagekitUrl } from "~/utils/imagekit";
 import type { Media } from "@fxmk/payload-types";
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request, url }: Route.LoaderArgs) {
   const meta = await getMeta();
 
-  const environment = getEnvironment(request);
+  const environment = getEnvironment(request, url);
   return Response.json({
     ...(meta.siteName
       ? {

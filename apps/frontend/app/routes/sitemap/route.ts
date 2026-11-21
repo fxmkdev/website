@@ -2,7 +2,7 @@ import { getCanonicalRequestUrl } from "~/utils/routing";
 import { type LoaderFunctionArgs } from "react-router";
 import { getPages, getPosts } from "~/utils/cms-data.server";
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request, url }: LoaderFunctionArgs) {
   const [pages, posts] = await Promise.all([getPages(), getPosts()]);
 
   const content = `<?xml version="1.0" encoding="UTF-8"?>
@@ -10,7 +10,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 ${pages
   .map(
     (p) => `  <url>
-    <loc>${getCanonicalRequestUrl(request).origin}${p.pathname}</loc>
+    <loc>${getCanonicalRequestUrl(request, url).origin}${p.pathname}</loc>
     <lastmod>${p.publishedAt?.split("T")[0]}</lastmod>
   </url>`,
   )
@@ -18,7 +18,7 @@ ${pages
 ${posts
   .map(
     (p) => `  <url>
-    <loc>${getCanonicalRequestUrl(request).origin}/articles/${p.slug}</loc>
+    <loc>${getCanonicalRequestUrl(request, url).origin}/articles/${p.slug}</loc>
     <lastmod>${p.publishedAt?.split("T")[0]}</lastmod>
   </url>`,
   )

@@ -15,11 +15,11 @@ import { tryGetPage } from "~/utils/cms-data.server";
 import { OptInLivePreview } from "~/components/live-preview";
 import { PAGE_DEPTH } from "~/utils/cms-data";
 
-export function meta({ data, matches }: Route.MetaArgs) {
-  const { content, canonicalUrl } = data;
+export function meta({ loaderData, matches }: Route.MetaArgs) {
+  const { content, canonicalUrl } = loaderData;
 
   const rootLoaderData = matches.find((m) => m?.id === "root")
-    ?.data as SerializeFromLoader<typeof rootLoader>;
+    ?.loaderData as SerializeFromLoader<typeof rootLoader>;
   if (!rootLoaderData) throw new Error("No root loader data");
 
   const parentMeta = matches.flatMap((match) => match?.meta ?? []);
@@ -34,10 +34,10 @@ export function meta({ data, matches }: Route.MetaArgs) {
   ];
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const { pageUrl } = await handleIncomingRequest(request);
+export async function loader({ request, url }: LoaderFunctionArgs) {
+  const { pageUrl } = await handleIncomingRequest(request, url);
 
-  const requestUrl = getRequestUrl(request);
+  const requestUrl = getRequestUrl(request, url);
   const previewKey = requestUrl.searchParams.get("previewKey");
   if (previewKey && previewKey !== process.env.PREVIEW_KEY) {
     throw new Response(null, { status: 401, statusText: "Unauthorized" });
@@ -55,7 +55,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   return {
     origin: requestUrl.origin,
-    canonicalUrl: getCanonicalRequestUrl(request).href,
+    canonicalUrl: getCanonicalRequestUrl(request, url).href,
     pageUrl,
     dataPath,
     content,

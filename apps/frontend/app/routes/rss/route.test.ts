@@ -51,6 +51,7 @@ beforeEach(() => {
 test("adds Media RSS image tags for posts with SEO images", async () => {
   const response = await loader({
     request: new Request("https://example.com/articles/rss.xml"),
+    url: new URL("https://example.com/articles/rss.xml"),
   } as Parameters<typeof loader>[0]);
   const content = await response.text();
 
