@@ -20,11 +20,11 @@ import { Media } from "~/components/media";
 import type { Media as MediaType } from "@fxmk/payload-types";
 import { PostH2, PostH3, PostH4, PostH5, PostH6 } from "./headings";
 
-export function meta({ data, matches }: Route.MetaArgs) {
-  const { content, canonicalUrl } = data;
+export function meta({ loaderData, matches }: Route.MetaArgs) {
+  const { content, canonicalUrl } = loaderData;
 
   const rootLoaderData = matches.find((m) => m?.id === "root")
-    ?.data as SerializeFromLoader<typeof rootLoader>;
+    ?.loaderData as SerializeFromLoader<typeof rootLoader>;
   if (!rootLoaderData) throw new Error("No root loader data");
 
   const parentMeta = matches.flatMap((match) => match?.meta ?? []);
@@ -39,11 +39,11 @@ export function meta({ data, matches }: Route.MetaArgs) {
   ];
 }
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
-  await handleIncomingRequest(request);
+export async function loader({ request, url, params }: LoaderFunctionArgs) {
+  await handleIncomingRequest(request, url);
   if (!params.slug) throw new Error("Missing slug");
 
-  const requestUrl = getRequestUrl(request);
+  const requestUrl = getRequestUrl(request, url);
 
   const previewKey = requestUrl.searchParams.get("previewKey");
   if (previewKey && previewKey !== process.env.PREVIEW_KEY) {
@@ -58,7 +58,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   return {
     origin: requestUrl.origin,
-    canonicalUrl: getCanonicalRequestUrl(request).href,
+    canonicalUrl: getCanonicalRequestUrl(request, url).href,
     dataPath,
     content,
   };

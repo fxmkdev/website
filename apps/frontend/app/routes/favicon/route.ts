@@ -5,9 +5,9 @@ import type { Route } from "../../+types/root";
 import { getEnvironment } from "~/utils/environment.server";
 import type { Media } from "@fxmk/payload-types";
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request, url }: Route.LoaderArgs) {
   const meta = await getMeta();
-  const environment = getEnvironment(request);
+  const environment = getEnvironment(request, url);
 
   if (!meta.faviconIco) {
     return new Response(null, { status: 404 });

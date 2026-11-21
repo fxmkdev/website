@@ -40,21 +40,26 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
-export const meta: Route.MetaFunction = ({ data }) => {
-  if (!data) {
+export const meta: Route.MetaFunction = ({ loaderData }) => {
+  if (!loaderData) {
     return [];
   }
 
   return [
-    ...(data.meta.siteName
-      ? [{ name: "apple-mobile-web-app-title", content: data.meta.siteName }]
+    ...(loaderData.meta.siteName
+      ? [
+          {
+            name: "apple-mobile-web-app-title",
+            content: loaderData.meta.siteName,
+          },
+        ]
       : []),
     {
       name: "theme-color",
-      content: data.meta.themeColorDark,
+      content: loaderData.meta.themeColorDark,
       media: "(prefers-color-scheme: dark)",
     },
-    ...(data.meta.favicon
+    ...(loaderData.meta.favicon
       ? [
           {
             tagName: "link",
@@ -62,8 +67,8 @@ export const meta: Route.MetaFunction = ({ data }) => {
             type: "image/png",
             sizes: "96x96",
             href: imagekitUrl(
-              data.environment.imagekitBaseUrl,
-              (data.meta.favicon as Media).filename!,
+              loaderData.environment.imagekitBaseUrl,
+              (loaderData.meta.favicon as Media).filename!,
               [{ format: "png", width: "96", height: "96" }],
             ),
           },
@@ -72,35 +77,35 @@ export const meta: Route.MetaFunction = ({ data }) => {
             rel: "apple-touch-icon",
             sizes: "180x180",
             href: imagekitUrl(
-              data.environment.imagekitBaseUrl,
-              (data.meta.favicon as Media).filename!,
+              loaderData.environment.imagekitBaseUrl,
+              (loaderData.meta.favicon as Media).filename!,
               [{ format: "png", width: "180", height: "180" }],
             ),
           },
         ]
       : []),
-    ...(data.meta.faviconIco
+    ...(loaderData.meta.faviconIco
       ? [
           {
             tagName: "link",
             rel: "shortcut icon",
             href: imagekitUrl(
-              data.environment.imagekitBaseUrl,
-              (data.meta.faviconIco as Media).filename!,
+              loaderData.environment.imagekitBaseUrl,
+              (loaderData.meta.faviconIco as Media).filename!,
               [{ format: "orig" }],
             ),
           },
         ]
       : []),
-    ...(data.meta.faviconSvg
+    ...(loaderData.meta.faviconSvg
       ? [
           {
             tagName: "link",
             rel: "icon",
             type: "image/svg+xml",
             href: imagekitUrl(
-              data.environment.imagekitBaseUrl,
-              (data.meta.faviconSvg as Media).filename!,
+              loaderData.environment.imagekitBaseUrl,
+              (loaderData.meta.faviconSvg as Media).filename!,
               [{ format: "orig" }],
             ),
           },
@@ -109,7 +114,7 @@ export const meta: Route.MetaFunction = ({ data }) => {
   ];
 };
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request, url }: Route.LoaderArgs) {
   const [header, footer, meta] = await Promise.all([
     getHeader(),
     getFooter(),
@@ -120,7 +125,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     header,
     footer,
     meta,
-    environment: getEnvironment(request),
+    environment: getEnvironment(request, url),
   };
 }
 

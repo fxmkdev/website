@@ -10,7 +10,7 @@ const rssDateFormat = "eee, dd MMM yyyy HH:mm:ss xx";
 const rssImageWidth = 1200;
 const rssImageHeight = 630;
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request, url }: Route.LoaderArgs) {
   const [meta, page, posts] = await Promise.all([
     getMeta(),
     tryGetPage("/articles"),
@@ -18,7 +18,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   ]);
 
   if (!page) throw new Response(null, { status: 404, statusText: "Not Found" });
-  const environment = getEnvironment(request);
+  const environment = getEnvironment(request, url);
 
   const channelLastChanged = posts
     .map((p) => p.publishedAt)
@@ -29,15 +29,15 @@ export async function loader({ request }: Route.LoaderArgs) {
      <rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xmlns:webfeeds="http://webfeeds.org/rss/1.0" version="2.0">
        <channel>
          <title>${meta.siteName ?? ""}</title>
-         <link>${getCanonicalUrl(request, "/articles")}</link>
+         <link>${getCanonicalUrl(request, url, "/articles")}</link>
          <description>${page.meta?.description}</description>
          <language>en</language>
          <ttl>60</ttl>
          <lastBuildDate>${channelLastChanged}</lastBuildDate>
-         <atom:link href="${getCanonicalRequestUrl(request)}" rel="self" type="application/rss+xml" />
+         <atom:link href="${getCanonicalRequestUrl(request, url)}" rel="self" type="application/rss+xml" />
          <webfeeds:cover image="${getSocialImageUrl(page.meta!, 2400, 1260, environment)}" />
-         <webfeeds:icon>${getCanonicalUrl(request, "/favicon-96x96.png")}</webfeeds:icon>
-         <webfeeds:logo>${getCanonicalUrl(request, "/favicon.svg")}</webfeeds:logo>
+         <webfeeds:icon>${getCanonicalUrl(request, url, "/favicon-96x96.png")}</webfeeds:icon>
+         <webfeeds:logo>${getCanonicalUrl(request, url, "/favicon.svg")}</webfeeds:logo>
          <webfeeds:accentColor>#2dd4bf</webfeeds:accentColor>
          ${posts
            .map((post) => {
@@ -47,8 +47,8 @@ export async function loader({ request }: Route.LoaderArgs) {
              <title>${cdata(title)}</title>
              <description>${cdata(content_summary ?? "")}</description>
              ${publishedAt ? `<pubDate>${format(parseISO(publishedAt), rssDateFormat)}</pubDate>` : ""}
-             <link>${getCanonicalUrl(request, `/articles/${slug}`)}</link>
-             <guid>${getCanonicalUrl(request, `/articles/${slug}`)}</guid>
+             <link>${getCanonicalUrl(request, url, `/articles/${slug}`)}</link>
+             <guid>${getCanonicalUrl(request, url, `/articles/${slug}`)}</guid>
              ${getItemImageTags(post, environment)}
            </item>`;
            })
@@ -64,8 +64,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   });
 }
 
-function getCanonicalUrl(request: Request, pathname: string) {
-  const url = getCanonicalRequestUrl(request);
+function getCanonicalUrl(request: Request, routeUrl: URL, pathname: string) {
+  const url = getCanonicalRequestUrl(request, routeUrl);
   url.pathname = pathname;
   return url.toString();
 }

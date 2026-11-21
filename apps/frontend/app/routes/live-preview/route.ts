@@ -10,10 +10,10 @@ export function loader() {
   });
 }
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request, url }: ActionFunctionArgs) {
   if (request.method !== "POST") return loader();
 
-  const previewKey = new URL(request.url).searchParams.get("previewKey");
+  const previewKey = url.searchParams.get("previewKey");
   if (!process.env.PREVIEW_KEY || previewKey !== process.env.PREVIEW_KEY) {
     return Response.json({ error: "Unauthorized" }, { status: 401, headers });
   }

@@ -16,6 +16,7 @@ vi.mock("./projects", () => ({ Projects: vi.fn() }));
 function loadPage(path: string) {
   return loader({
     request: new Request(`https://example.com${path}`),
+    url: new URL(`https://example.com${path}`),
   } as Parameters<typeof loader>[0]);
 }
 

@@ -26,19 +26,24 @@ test("live updates render without any browser cookies or API credentials", async
       response.request().method() === "POST",
   );
   await page.evaluate(
-    (data) => {
+    ({ data, origin }) => {
       window.dispatchEvent(
         new MessageEvent("message", {
-          // Matches the CMS URL exposed to the frontend by docker-compose.yml.
-          origin: "http://cms:3001",
+          // Match the CMS origin configured in the frontend.
+          origin,
           data: { type: "payload-live-preview", collectionSlug: "pages", data },
         }),
       );
     },
     {
-      ...document,
-      hero: {
-        richText: richTextRoot(heading("h1", text("Updated without cookies"))),
+      origin: process.env.CMS_PREVIEW_ORIGIN ?? process.env.CMS_BASE_URL!,
+      data: {
+        ...document,
+        hero: {
+          richText: richTextRoot(
+            heading("h1", text("Updated without cookies")),
+          ),
+        },
       },
     },
   );
@@ -75,14 +80,20 @@ test("a failed preview response preserves content and displays an error", async 
       body: JSON.stringify({ errors: [{ message: "Forbidden" }] }),
     }),
   );
-  await page.evaluate((data) => {
-    window.dispatchEvent(
-      new MessageEvent("message", {
-        origin: "http://cms:3001",
-        data: { type: "payload-live-preview", collectionSlug: "pages", data },
-      }),
-    );
-  }, document);
+  await page.evaluate(
+    ({ data, origin }) => {
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          origin,
+          data: { type: "payload-live-preview", collectionSlug: "pages", data },
+        }),
+      );
+    },
+    {
+      data: document,
+      origin: process.env.CMS_PREVIEW_ORIGIN ?? process.env.CMS_BASE_URL!,
+    },
+  );
   await expect(page.getByRole("alert")).toContainText("Preview update failed");
   await expect(
     page.getByRole("heading", { name: "Content stays visible" }),
