@@ -2,6 +2,7 @@ import { MetaImageField } from "@payloadcms/plugin-seo/fields";
 
 export function seoImageField() {
   const field = MetaImageField({ relationTo: "media" });
+  field.label = "Social image override";
   // The plugin applies overrides shallowly, so retain its custom field editor.
   field.admin = {
     ...field.admin,

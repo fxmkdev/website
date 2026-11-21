@@ -25,15 +25,15 @@ test("generates a JPEG with default layout and matching image metadata", () => {
   });
   expect(image.url).toContain("/base.jpg?tr=w-1200,h-630,fo-center,f-jpg:");
   expect(image.url).toContain(
-    "ff-Roboto,tg-b,fs-64,co-FFFFFF,w-1056,ia-left,lfo-bottom_left,lx-72,ly-N72,l-end",
+    "ff-Roboto,tg-b,fs-64,co-FFFFFF,w-1056,ia-left,lap-bottom_left,lx-72,ly-N72,l-end",
   );
   expect(overlayText(image.url)).toBe("Hello world");
 });
 
 test.each([
-  ["top-left", "ia-left,lfo-top_left,lx-72,ly-72"],
-  ["center", "ia-center,lfo-center"],
-  ["bottom-left", "ia-left,lfo-bottom_left,lx-72,ly-N72"],
+  ["top-left", "ia-left,lap-top_left,lx-72,ly-72"],
+  ["center", "ia-center,lap-top_left,lxc-600,lyc-315"],
+  ["bottom-left", "ia-left,lap-bottom_left,lx-72,ly-N72"],
 ] as const)("supports %s title styling", (titlePosition, position) => {
   const image = resolveSocialImage({
     ...options,

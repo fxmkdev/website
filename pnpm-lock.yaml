@@ -273,6 +273,9 @@ importers:
 
   libs/shared:
     dependencies:
+      '@imagekit/javascript':
+        specifier: ^5.4.0
+        version: 5.4.0
       payload:
         specifier: ^3.94.0
         version: 3.94.0(graphql@16.10.0)(typescript@6.0.3)

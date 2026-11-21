@@ -1,4 +1,10 @@
 import { GlobalConfig } from "payload";
+import {
+  socialImageFonts,
+  socialImagePositions,
+  validateSocialImageTemplate,
+  type SocialImageTemplateSettings,
+} from "@fxmk/shared/social-image";
 import { refreshCacheForGlobals } from "@/hooks/refresh-cache-hook";
 
 export const Meta: GlobalConfig = {
@@ -11,6 +17,10 @@ export const Meta: GlobalConfig = {
       name: "socialImageTemplate",
       label: "Social Image Template",
       type: "group",
+      validate: (value) =>
+        validateSocialImageTemplate(
+          (value || {}) as SocialImageTemplateSettings,
+        ) || true,
       admin: {
         description:
           "Used for pages and posts without a manual SEO image. Select a base image once to enable automatic previews.",
@@ -27,17 +37,39 @@ export const Meta: GlobalConfig = {
           },
           admin: {
             description:
-              "Use a 1200×630 image with space for a title inside a 72-pixel margin. Existing SEO images take priority.",
+              "Use a 1200×630 image with space for a title inside the configured margins. Existing social image overrides take priority.",
           },
         },
         {
           name: "titlePosition",
           type: "select",
           defaultValue: "bottom-left",
+          options: socialImagePositions.map((value) => ({
+            label: value,
+            value,
+          })),
+          admin: {
+            components: {
+              Field: "@/meta/components/alignment-field#AlignmentField",
+            },
+          },
+        },
+        {
+          name: "fontFamily",
+          type: "select",
+          defaultValue: "Roboto",
+          options: socialImageFonts.map(({ label, value }) => ({
+            label,
+            value,
+          })),
+        },
+        {
+          name: "fontWeight",
+          type: "select",
+          defaultValue: "bold",
           options: [
-            { label: "Top left", value: "top-left" },
-            { label: "Center", value: "center" },
-            { label: "Bottom left", value: "bottom-left" },
+            { label: "Regular", value: "regular" },
+            { label: "Bold", value: "bold" },
           ],
         },
         {
@@ -60,6 +92,32 @@ export const Meta: GlobalConfig = {
             !value || /^#[0-9a-f]{6}$/i.test(value)
               ? true
               : "Use a six-digit hex color, for example #FFFFFF.",
+        },
+        {
+          name: "margins",
+          type: "group",
+          admin: {
+            description:
+              "Whole pixels from each canvas edge. The remaining area must fit at least one line and an ellipsis.",
+          },
+          fields: ["top", "right", "bottom", "left"].map((name) => ({
+            name,
+            type: "number" as const,
+            min: 0,
+            defaultValue: 72,
+          })),
+        },
+        {
+          name: "preview",
+          type: "ui",
+          admin: {
+            components: {
+              Field: {
+                path: "@/meta/components/social-image-preview#SocialImagePreview",
+                clientProps: { imagekitBaseUrl: process.env.IMAGEKIT_BASE_URL },
+              },
+            },
+          },
         },
       ],
     },
