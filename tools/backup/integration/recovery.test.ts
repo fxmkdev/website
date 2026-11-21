@@ -19,7 +19,7 @@ import { setTimeout } from "node:timers/promises";
 // No host MongoDB/AWS installations or real credentials are used. The CLI
 // invokes the actual tools inside disposable containers via PATH adapters.
 test(
-  "real backup and cross-environment recovery with disposable MongoDB and MinIO",
+  "real backup and cross-environment recovery with disposable MongoDB and Moto",
   { timeout: 900_000 },
   async (t) => {
     const root = await realpath(
@@ -27,11 +27,13 @@ test(
     );
     const id = `website-recovery-${randomUUID().slice(0, 8)}`;
     const mongo = `${id}-mongo`,
-      minio = `${id}-minio`,
+      moto = `${id}-moto`,
       aws = `${id}-aws`;
     const mongoImage = "mongo:8.0";
-    const minioImage = "website-backup-minio:2025-09-07";
+    const motoImage =
+      "ghcr.io/getmoto/motoserver:5.2.5@sha256:59a1965d845249b04def37a0e2565f9cc6c44543cb89b68e90f28f344b3b0d1a";
     const awsImage = "amazon/aws-cli:2.27.6";
+    const s3Endpoint = "http://localhost:5000";
     const bin = join(root, "bin");
     await mkdir(bin);
     const credentials = join(root, "credentials");
@@ -47,7 +49,6 @@ test(
       AWS_SHARED_CREDENTIALS_FILE: credentials,
       AWS_CONFIG_FILE: join(root, "aws-config"),
       AWS_EC2_METADATA_DISABLED: "true",
-      BUILDX_CONFIG: join(root, "buildx"),
       AWS_ACCESS_KEY_ID: "",
       AWS_SECRET_ACCESS_KEY: "",
       AWS_SESSION_TOKEN: "",
@@ -86,7 +87,7 @@ test(
     }
     t.after(async () => {
       try {
-        await exec("docker", ["rm", "-f", "-v", aws, minio, mongo], "", true);
+        await exec("docker", ["rm", "-f", "-v", aws, moto, mongo], "", true);
         const remaining = await exec("docker", [
           "ps",
           "-aq",
@@ -102,30 +103,18 @@ test(
         await rm(root, { recursive: true, force: true });
       }
     });
-    for (const image of [mongoImage, awsImage])
+    for (const image of [mongoImage, motoImage, awsImage])
       await exec("docker", ["pull", image]);
-    await exec("docker", [
-      "build",
-      "-t",
-      minioImage,
-      "-f",
-      fileURLToPath(new URL("Minio.Dockerfile", import.meta.url)),
-      fileURLToPath(new URL(".", import.meta.url)),
-    ]);
     const mount = ["--mount", `type=bind,source=${root},target=${root}`];
     await exec("docker", ["run", "-d", "--name", mongo, ...mount, mongoImage]);
     await exec("docker", [
       "run",
       "-d",
       "--name",
-      minio,
+      moto,
       "-e",
-      "MINIO_ROOT_USER=disposable-access",
-      "-e",
-      "MINIO_ROOT_PASSWORD=disposable-secret",
-      minioImage,
-      "server",
-      "/data",
+      "MOTO_PORT=5000",
+      motoImage,
     ]);
     await exec("docker", [
       "run",
@@ -133,7 +122,7 @@ test(
       "--name",
       aws,
       "--network",
-      `container:${minio}`,
+      `container:${moto}`,
       ...mount,
       "--entrypoint",
       "/bin/sh",
@@ -160,7 +149,7 @@ child.on('error',()=>process.exit(1)); child.on('close',code=>process.exit(code?
       "--region",
       "us-east-1",
       "--endpoint-url",
-      "http://127.0.0.1:9000",
+      s3Endpoint,
     ];
     async function s3(args: string[]) {
       return exec(join(bin, "aws"), [...awsArgs, ...args]);
@@ -190,7 +179,7 @@ child.on('error',()=>process.exit(1)); child.on('close',code=>process.exit(code?
     async function config(name: string, database: string, bucket: string) {
       await writeFile(
         join(root, `.env.${name}`),
-        `DATABASE_URI=mongodb://127.0.0.1:27017/${database}\nS3_BUCKET=${bucket}\nAWS_PROFILE=disposable\nAWS_REGION=us-east-1\nS3_ENDPOINT_URL=http://127.0.0.1:9000\n`,
+        `DATABASE_URI=mongodb://127.0.0.1:27017/${database}\nS3_BUCKET=${bucket}\nAWS_PROFILE=disposable\nAWS_REGION=us-east-1\nS3_ENDPOINT_URL=${s3Endpoint}\n`,
       );
     }
     await config("source", "source", "source-media");

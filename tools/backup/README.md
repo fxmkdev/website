@@ -164,14 +164,17 @@ pnpm --filter @fxmk/backup-tools test
 pnpm --filter @fxmk/backup-tools test:integration
 ```
 
-The integration test requires Docker, builds pinned upstream MinIO source, and
-pulls MongoDB and AWS CLI images. It starts isolated disposable containers,
+The integration test requires Docker and pulls MongoDB, AWS CLI, and Moto
+images. Moto's official `ghcr.io/getmoto/motoserver:5.2.5` image is pinned by
+its multi-architecture manifest digest in the test. Its standalone server
+listens on port 5000, and the AWS CLI shares its network namespace using
+`http://localhost:5000`. The test starts isolated disposable containers,
 temporary credentials, databases, buckets, and directories without publishing
 host ports or using website credentials. PATH adapters run real MongoDB tools
 and AWS CLI inside those containers, so host installations are unnecessary. It
 verifies document/index recovery, all identity exclusions, cross-database
 mapping, extra collection/object deletion, same-size media replacement, empty
 media recovery, dry run, and confirmation refusal. Containers and temporary
-files are removed on completion or failure. Downloaded images/build caches are
-retained for subsequent runs. The dedicated Backup tools CI workflow runs the
-same checks without deployment credentials.
+files are removed on completion or failure. Downloaded images are retained for
+subsequent runs. The dedicated Backup tools CI workflow runs the same checks
+without deployment credentials.
