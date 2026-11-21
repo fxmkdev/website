@@ -74,7 +74,11 @@ export async function create(collection: string, content: object) {
 }
 
 export async function update(path: string, content: object) {
-  return fetchCms(path, { method: "PATCH", body: JSON.stringify(content) });
+  const result = await fetchCms(path, {
+    method: "PATCH",
+    body: JSON.stringify(content),
+  });
+  return result.doc;
 }
 
 export async function getOrCreate(

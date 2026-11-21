@@ -8,6 +8,7 @@ import {
   update,
 } from "../common/cms";
 import { heading, richTextRoot, text } from "@fxmk/shared";
+import { sendPreviewUpdate } from "../common/live-preview";
 
 test.describe.configure({ mode: "serial" });
 const frontendUrl = new URL(process.env.FRONTEND_BASE_URL!);
@@ -286,6 +287,7 @@ for (const collection of ["pages", "posts"] as const) {
       ...(collection === "pages" ? { hero: hero("Draft preview") } : {}),
       _status: "draft",
     });
+    expect(draft.id).toBe(published.id);
     const path =
       collection === "pages"
         ? published.pathname
@@ -313,42 +315,11 @@ for (const collection of ["pages", "posts"] as const) {
       title: "Unsaved live preview",
       ...(collection === "pages" ? { hero: hero("Unsaved live preview") } : {}),
     };
-    const previewOrigin =
-      process.env.CMS_PREVIEW_ORIGIN ?? process.env.CMS_BASE_URL!;
-    // Compose uses an internal CMS hostname for the frontend. Route that
-    // browser request to the published port while retaining the editor origin.
-    await page
-      .context()
-      .route(`${previewOrigin}/api/users/me`, async (route) => {
-        const response = await request.get(
-          `${process.env.CMS_BASE_URL}/api/users/me`,
-        );
-        await route.fulfill({ response });
-      });
-    const popup = page.waitForEvent("popup");
-    await page.evaluate((url) => {
-      window.open(url);
-    }, `${previewOrigin}/api/users/me`);
-    const cms = await popup;
-    await cms.waitForLoadState();
-    const updateResponse = page.waitForResponse(
-      (response) => new URL(response.url()).pathname === "/api/live-preview",
-    );
-    await cms.evaluate(
-      ({ target, collection, updated }) => {
-        window.opener.postMessage(
-          {
-            type: "payload-live-preview",
-            collectionSlug: collection,
-            data: updated,
-          },
-          target,
-        );
-      },
-      { target: canonicalOrigin, collection, updated },
-    );
-    await cms.close();
-    expect((await updateResponse).status()).toBe(200);
+    await sendPreviewUpdate(page, request, {
+      collection,
+      data: updated,
+      targetOrigin: canonicalOrigin,
+    });
     await expect(
       page.getByRole("heading", { name: "Unsaved live preview", exact: true }),
     ).toBeVisible();
