@@ -1,16 +1,13 @@
-import type { Media, Meta } from "@fxmk/payload-types";
-import { getAltFromMedia } from "./media";
-import { imagekitUrl } from "./imagekit";
+import type { Meta } from "@fxmk/payload-types";
+import {
+  resolveSocialImage,
+  type PageMeta,
+  type SocialImage,
+} from "./social-image";
 import type { MetaDescriptor } from "react-router";
 
 type Environment = {
   imagekitBaseUrl: string;
-};
-
-type PageMeta = {
-  title?: string | null;
-  image?: (string | null) | Media;
-  description?: string | null;
 };
 
 export function getPageMetaDescriptors(
@@ -18,9 +15,22 @@ export function getPageMetaDescriptors(
   pageMeta: PageMeta | undefined,
   siteMeta: Meta,
   environment: Environment,
+  contentTitle?: string | null,
 ): MetaDescriptor[] {
   const title = pageMeta?.title ?? "";
   const description = pageMeta?.description ?? "";
+  const options = {
+    meta: pageMeta,
+    title: contentTitle,
+    template: siteMeta.socialImageTemplate,
+    environment,
+  };
+  const image = resolveSocialImage(options);
+  const twitterImage = resolveSocialImage({
+    ...options,
+    width: 2400,
+    height: 1200,
+  });
   return [
     { tagName: "link", rel: "canonical", href: canonicalUrl },
     { title },
@@ -38,7 +48,7 @@ export function getPageMetaDescriptors(
       name: "og:url",
       content: canonicalUrl,
     },
-    ...getOpenGraphImageMeta(pageMeta, environment),
+    ...getOpenGraphImageMeta(image),
     {
       name: "twitter:card",
       content: "summary_large_image",
@@ -51,83 +61,25 @@ export function getPageMetaDescriptors(
       name: "twitter:description",
       content: description,
     },
-    ...getTwitterCardImageMeta(pageMeta, environment),
+    ...getTwitterCardImageMeta(twitterImage),
   ];
 }
 
-function getTwitterCardImageMeta(
-  meta: PageMeta | undefined,
-  environment: Environment,
-): { name: string; content: string }[] {
-  const image = meta?.image;
-  if (!image) {
-    return [];
-  }
-
-  if (typeof image !== "object") {
-    throw new Error("Invalid image");
-  }
-
+function getTwitterCardImageMeta(image: SocialImage | undefined) {
+  if (!image) return [];
   return [
-    {
-      name: "twitter:image",
-      content: getSocialImageUrl(meta, 2400, 1200, environment),
-    },
-    {
-      name: "twitter:image:alt",
-      content: getAltFromMedia(image) ?? "",
-    },
+    { name: "twitter:image", content: image.url },
+    { name: "twitter:image:alt", content: image.alt },
   ];
 }
 
-function getOpenGraphImageMeta(
-  meta: PageMeta | undefined,
-  environment: Environment,
-): { name: string; content: string }[] {
-  const image = meta?.image;
-  if (!image) {
-    return [];
-  }
-
-  if (typeof image !== "object") {
-    throw new Error("Invalid image");
-  }
-
-  const width = 1200;
-  const height = 630;
-
+function getOpenGraphImageMeta(image: SocialImage | undefined) {
+  if (!image) return [];
   return [
-    {
-      name: "og:image",
-      content: getSocialImageUrl(meta, width, height, environment),
-    },
-    {
-      name: "og:image:alt",
-      content: getAltFromMedia(image) ?? "",
-    },
-    { name: "og:image:type", content: image.mimeType ?? "" },
-    { name: "og:image:width", content: width.toString() },
-    { name: "og:image:height", content: height.toString() },
+    { name: "og:image", content: image.url },
+    { name: "og:image:alt", content: image.alt },
+    { name: "og:image:type", content: image.mimeType },
+    { name: "og:image:width", content: image.width.toString() },
+    { name: "og:image:height", content: image.height.toString() },
   ];
-}
-
-export function getSocialImageUrl(
-  meta: PageMeta | undefined,
-  width: number,
-  height: number,
-  environment: Environment,
-) {
-  const image = meta?.image;
-  if (typeof image !== "object") {
-    throw new Error("Invalid image");
-  }
-
-  if (!image?.filename) return "";
-
-  return imagekitUrl(environment.imagekitBaseUrl, image.filename, [
-    {
-      width: width.toString(),
-      height: height.toString(),
-    },
-  ]);
 }

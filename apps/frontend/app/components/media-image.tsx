@@ -1,4 +1,4 @@
-import { type Media } from "@fxmk/payload-types";
+import type { Media } from "@fxmk/payload-types";
 import { useEnvironment } from "../utils/environment";
 import { useMemo } from "react";
 import { imagekitImageSources, type ImageCrop } from "~/utils/imagekit";
