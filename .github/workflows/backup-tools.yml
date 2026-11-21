@@ -1,0 +1,35 @@
+name: Backup tools
+on:
+  pull_request:
+    paths:
+      - "tools/backup/**"
+      - ".github/workflows/backup-tools.yml"
+      - "package.json"
+      - "pnpm-workspace.yaml"
+      - "pnpm-lock.yaml"
+  push:
+    branches: [main]
+    paths:
+      - "tools/backup/**"
+      - ".github/workflows/backup-tools.yml"
+      - "package.json"
+      - "pnpm-workspace.yaml"
+      - "pnpm-lock.yaml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NODE_VERSION: 24
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm --filter @fxmk/backup-tools install --frozen-lockfile
+      - run: pnpm --filter @fxmk/backup-tools check-format
+      - run: pnpm --filter @fxmk/backup-tools lint
+      - run: pnpm --filter @fxmk/backup-tools typecheck
+      - run: pnpm --filter @fxmk/backup-tools test
+      - run: pnpm --filter @fxmk/backup-tools test:integration

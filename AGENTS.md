@@ -56,6 +56,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guidelines.
 - Generated Payload types package: `libs/payload-types`
 - Shared workspace package: `libs/shared`
 - End-to-end tests: `tests/e2e`
+- Backup/recovery CLI: `tools/backup` (`@fxmk/backup-tools`)
 - Release tooling: `@fxmk/releaser`
 
 ## Development Commands
@@ -64,11 +65,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guidelines.
 pnpm install --frozen-lockfile             # Install dependencies
 pnpm generate:types                        # Generate/copy Payload types
 pnpm check                                 # Full local check pipeline
-pnpm lint                                  # Lint frontend and CMS
-pnpm check-format                          # Prettier check for frontend and CMS
-pnpm typecheck                             # Generate types, then typecheck frontend
-pnpm typecheck:generated                   # Typecheck frontend with existing generated types
-pnpm test                                  # Run frontend Vitest tests
+pnpm lint                                  # Lint frontend, CMS, and backup tools
+pnpm check-format                          # Prettier check for apps and backup tools
+pnpm typecheck                             # Generate types, then typecheck frontend and backup tools
+pnpm typecheck:generated                   # Typecheck frontend and tools with existing generated types
+pnpm test                                  # Run frontend and backup tool tests
 pnpm build                                 # Generate types, then build frontend and CMS
 pnpm build:generated                       # Build with existing generated types
 

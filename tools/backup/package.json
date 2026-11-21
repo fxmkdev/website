@@ -1,0 +1,30 @@
+{
+  "name": "@fxmk/backup-tools",
+  "private": true,
+  "version": "0.0.0-unknown",
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "cli": "node src/cli.ts",
+    "lint": "eslint . --max-warnings=0",
+    "check-format": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.ts",
+    "test:integration": "node --test integration/*.test.ts"
+  },
+  "dependencies": {
+    "commander": "^15.0.0",
+    "mongodb-connection-string-url": "^3.0.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.13.1",
+    "eslint": "^10.4.0",
+    "globals": "^16.5.0",
+    "prettier": "^3.8.3",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.4"
+  }
+}

@@ -3,3 +3,5 @@
 /.backup
 /.s3-backup
 /.env
+
+/.backups/
