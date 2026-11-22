@@ -4,6 +4,8 @@ on:
     paths:
       - "tools/backup/**"
       - ".github/workflows/backup-tools.yml"
+      - ".github/actions/setup/**"
+      - ".nvmrc"
       - "package.json"
       - "pnpm-workspace.yaml"
       - "pnpm-lock.yaml"
@@ -12,6 +14,8 @@ on:
     paths:
       - "tools/backup/**"
       - ".github/workflows/backup-tools.yml"
+      - ".github/actions/setup/**"
+      - ".nvmrc"
       - "package.json"
       - "pnpm-workspace.yaml"
       - "pnpm-lock.yaml"
@@ -22,8 +26,6 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      NODE_VERSION: 24
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup

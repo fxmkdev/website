@@ -89,8 +89,9 @@ Keep descriptions concise, imperative, and behavior-focused.
 
 ## Runtime and Typings Policy
 
-- Use Node.js 24, as pinned in `.nvmrc` and CI.
-- Keep `@types/node` on the Node 24 line until runtime migration is scheduled.
+- Use Node.js 26.13.1, as pinned in `.nvmrc`, CI, and Docker.
+- Keep runtime constraints at `>=26.13.1 <27` and `@types/node` on the Node 26
+  line, aligned through the workspace override.
 
 ## Review Comment Workflow
 

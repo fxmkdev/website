@@ -15,9 +15,11 @@ controlled via a tailored, headless CMS based on
 
 ## Local Maintenance
 
-Use Node.js 24.22.3 or newer within the Node 24 release line and the pnpm
-version pinned in `package.json`. Payload 3.94 requires this minimum runtime;
-the development, CI, and Docker selectors remain on Node 24.
+Use Node.js 26.13.1 and the pnpm version pinned in `package.json`. Local
+development, CI, and Docker use this exact Node release; package engine
+constraints support `>=26.13.1 <27`. Node typings stay on the Node 26 line
+through the workspace override. Run `nvm install` and `nvm use` to select the
+version in `.nvmrc`.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -33,3 +35,28 @@ For MongoDB and S3 backup/recovery, use `pnpm data backup --env <environment>`
 and `pnpm data restore --env <environment>`. See the
 [backup CLI guide](tools/backup/README.md) for configuration, required snapshot
 paths, destructive-operation confirmation, and disposable recovery checks.
+
+## Docker validation
+
+Generate Payload types before building the frontend image. Build both image
+families on ARM64 and AMD64 to exercise native dependencies with glibc
+(frontend) and musl (CMS):
+
+```sh
+pnpm generate:types
+for arch in arm64 amd64; do
+  docker build --pull --platform "linux/$arch" \
+    -f apps/frontend/Dockerfile -t "website-frontend:node26-$arch" .
+  docker build --pull --platform "linux/$arch" \
+    -f apps/cms/Dockerfile -t "website-cms:node26-$arch" .
+  docker run --rm --platform "linux/$arch" \
+    --entrypoint node "website-frontend:node26-$arch" --version
+  docker run --rm --platform "linux/$arch" \
+    --entrypoint node "website-cms:node26-$arch" --version
+done
+```
+
+Both images must report `v26.13.1`. Validate Sharp image processing in the CMS
+image and start both applications with disposable local services before
+publishing. Reinstall dependencies after switching Node majors so native
+packages are installed for the selected runtime and platform.

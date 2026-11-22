@@ -31,9 +31,6 @@ on:
         value: ${{ jobs.version.outputs.sha }}
         description: "Commit SHA"
 
-env:
-  NODE_VERSION: 24
-
 jobs:
   version:
     name: "Generate version"
