@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install CMS dependencies
@@ -37,7 +37,7 @@ jobs:
       - name: Pull CMS types
         run: pnpm --filter payload-types pull-payload-types
       - name: Upload CMS types
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: payload-types
           path: libs/payload-types/src/payload-types.ts
@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install dependencies
@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install dependencies
@@ -74,12 +74,14 @@ jobs:
     needs: populate-cms-types
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Setup
         uses: ./.github/actions/setup
       - name: Download CMS types
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
+          # Preserve the warning behavior from download-artifact v4.
+          digest-mismatch: warn
           name: payload-types
           path: libs/payload-types/src
       - name: Install dependencies
@@ -92,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install dependencies
@@ -108,16 +110,18 @@ jobs:
       image: ${{ steps.image-name.outputs.image }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@master
+        uses: superfly/flyctl-actions/setup-flyctl@1.6
         with:
           version: ${{ env.FLYCTL_VERSION }}
       - name: Setup
         uses: ./.github/actions/setup
       - name: Download CMS types
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
+          # Preserve the warning behavior from download-artifact v4.
+          digest-mismatch: warn
           name: payload-types
           path: libs/payload-types/src
       - name: Get frontend image name
@@ -146,7 +150,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install dependencies
@@ -159,7 +163,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install dependencies
@@ -175,9 +179,9 @@ jobs:
       image: ${{ steps.image-name.outputs.image }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@master
+        uses: superfly/flyctl-actions/setup-flyctl@1.6
         with:
           version: ${{ env.FLYCTL_VERSION }}
       - name: Setup
@@ -213,13 +217,13 @@ jobs:
       CMS_API_KEY: e2e-tests-apikey
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install dependencies for e2e
         run: pnpm --filter e2e install --frozen-lockfile
       - name: Set up flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@master
+        uses: superfly/flyctl-actions/setup-flyctl@1.6
         with:
           version: ${{ env.FLYCTL_VERSION }}
       - name: Authenticate Fly.io Docker registry
@@ -268,7 +272,7 @@ jobs:
           echo "playwright_version=${PLAYWRIGHT_VERSION}" >> $GITHUB_OUTPUT
         working-directory: tests/e2e
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
@@ -280,8 +284,10 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         working-directory: tests/e2e
       - name: Download CMS types
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
+          # Preserve the warning behavior from download-artifact v4.
+          digest-mismatch: warn
           name: payload-types
           path: libs/payload-types/src
       - name: Run e2e tests
@@ -294,7 +300,7 @@ jobs:
           EXPECTED_VERSION: ${{ needs.version.outputs.version }}
           CMS_PREVIEW_ORIGIN: http://cms:3001
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report
@@ -346,7 +352,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout with full history
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Setup
