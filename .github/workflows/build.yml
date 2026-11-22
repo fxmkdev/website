@@ -206,7 +206,8 @@ jobs:
   e2e-tests:
     name: End-to-End Tests
     timeout-minutes: 60
-    runs-on: ubuntu-latest
+    # Playwright 1.60 does not support Ubuntu 26.04 (ubuntu-latest).
+    runs-on: ubuntu-24.04
     needs: [populate-cms-types, version, frontend-build-push, cms-build-push]
     env:
       CMS_API_KEY: e2e-tests-apikey
