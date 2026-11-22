@@ -31,6 +31,10 @@ Payload types are generated from the CMS and copied into `libs/payload-types`.
 Those generated files are gitignored, so run `pnpm generate:types` before
 frontend typechecks or builds in a fresh checkout.
 
+The development and E2E Compose files use `mongo:8.0` to follow production's
+MongoDB 8.0 release line while allowing patch updates. Keep both image tags in
+sync when production moves to a new release line.
+
 For MongoDB and S3 backup/recovery, use `pnpm data backup --env <environment>`
 and `pnpm data restore --env <environment>`. See the
 [backup CLI guide](tools/backup/README.md) for configuration, required snapshot
