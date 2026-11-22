@@ -5,7 +5,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "e2e": "playwright test --ui"
+    "e2e": "playwright test --ui",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",

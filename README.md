@@ -29,7 +29,16 @@ pnpm check
 
 Payload types are generated from the CMS and copied into `libs/payload-types`.
 Those generated files are gitignored, so run `pnpm generate:types` before
-frontend typechecks or builds in a fresh checkout.
+frontend or E2E typechecks or frontend builds in a fresh checkout.
+
+`pnpm typecheck` and `pnpm check` include the E2E package. To check only E2E
+types after generating CMS types, run `pnpm --filter @fxmk/e2e typecheck`. This
+check emits no files and needs no running services or Playwright browsers. CI
+runs it independently of the browser tests using the generated CMS types
+artifact.
+
+Shared rich-text builders emit root metadata and node versions required by
+Payload document types; include `version: 1` in hand-authored rich-text nodes.
 
 The development and E2E Compose files use `mongo:8.0` to follow production's
 MongoDB 8.0 release line while allowing patch updates. Keep both image tags in

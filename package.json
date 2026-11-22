@@ -6,7 +6,7 @@
     "lint": "pnpm --filter @fxmk/frontend lint --max-warnings=0 && pnpm --filter @fxmk/cms lint --max-warnings=0 && pnpm --filter @fxmk/backup-tools lint",
     "check-format": "pnpm --filter @fxmk/frontend check-format && pnpm --filter @fxmk/cms check-format && pnpm --filter @fxmk/backup-tools check-format",
     "typecheck": "pnpm generate:types && pnpm typecheck:generated",
-    "typecheck:generated": "pnpm --filter @fxmk/frontend typecheck && pnpm --filter @fxmk/backup-tools typecheck",
+    "typecheck:generated": "pnpm --filter @fxmk/frontend typecheck && pnpm --filter @fxmk/backup-tools typecheck && pnpm --filter @fxmk/e2e typecheck",
     "test": "pnpm --filter @fxmk/frontend exec vitest run && pnpm --filter @fxmk/backup-tools test",
     "build": "pnpm generate:types && pnpm build:generated",
     "build:generated": "pnpm --filter @fxmk/frontend build && pnpm --filter @fxmk/cms build:generated",

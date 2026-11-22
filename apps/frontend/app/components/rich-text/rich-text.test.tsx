@@ -256,6 +256,7 @@ describe("block element nodes", () => {
       <RichText
         content={richTextRoot({
           type: "block",
+          version: 1,
           fields: {
             blockType: "testBlock",
             testField: "Test Field Value",
@@ -278,6 +279,7 @@ describe("block element nodes", () => {
         <RichText
           content={richTextRoot({
             type: "block",
+            version: 1,
             fields: { blockType: "unknownBlock" },
           })}
         />,

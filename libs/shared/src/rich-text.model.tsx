@@ -8,10 +8,22 @@ export const IS_SUPERSCRIPT = 1 << 6;
 export const IS_HIGHLIGHT = 1 << 7;
 
 export type RichTextObject = {
-  root: { type: "root"; children: ElementNode[] };
+  root: {
+    type: "root";
+    children: ElementNode[];
+    direction: "ltr" | "rtl" | null;
+    format: "" | "left" | "start" | "center" | "right" | "end" | "justify";
+    indent: number;
+    version: number;
+  };
 };
 
-export type TextNode = { type: "text"; text?: string; format: number };
+export type TextNode = {
+  type: "text";
+  text?: string;
+  format: number;
+  version: number;
+};
 
 export type ElementNode =
   | ListItemElementNode
@@ -23,11 +35,11 @@ export type ElementNode =
 
 export type Node = ElementNode | TextNode | LineBreakNode | TabNode;
 
-export type LineBreakNode = { type: "linebreak" };
+export type LineBreakNode = { type: "linebreak"; version: number };
 
-export type TabNode = { type: "tab" };
+export type TabNode = { type: "tab"; version: number };
 
-type ElementNodeWithChildren = { children: Node[] };
+type ElementNodeWithChildren = { children: Node[]; version: number };
 
 export type ListItemElementNode = ElementNodeWithChildren & {
   type: "listitem";
@@ -72,6 +84,7 @@ export type ListElementNode = ElementNodeWithChildren & {
 
 export type BlockElementNode = {
   type: "block";
+  version: number;
   fields: {
     blockType: string;
     [key: string]: unknown;
