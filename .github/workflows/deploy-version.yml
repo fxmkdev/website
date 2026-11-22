@@ -30,9 +30,9 @@ jobs:
         steps.create-app.outputs.app_name) || vars.CANONICAL_HOSTNAME }}/
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@master
+        uses: superfly/flyctl-actions/setup-flyctl@1.6
         with:
           version: ${{ env.FLYCTL_VERSION }}
       - name: Create app
@@ -129,9 +129,9 @@ jobs:
         steps.create-app.outputs.app_name) || vars.SERVER_URL }}/
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@master
+        uses: superfly/flyctl-actions/setup-flyctl@1.6
         with:
           version: ${{ env.FLYCTL_VERSION }}
       - name: Create app
