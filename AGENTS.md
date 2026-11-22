@@ -67,8 +67,8 @@ pnpm generate:types                        # Generate/copy Payload types
 pnpm check                                 # Full local check pipeline
 pnpm lint                                  # Lint frontend, CMS, and backup tools
 pnpm check-format                          # Prettier check for apps and backup tools
-pnpm typecheck                             # Generate types, then typecheck frontend and backup tools
-pnpm typecheck:generated                   # Typecheck frontend and tools with existing generated types
+pnpm typecheck                             # Generate types, then typecheck frontend, backup tools, and E2E
+pnpm typecheck:generated                   # Typecheck frontend, tools, and E2E with existing generated types
 pnpm test                                  # Run frontend and backup tool tests
 pnpm build                                 # Generate types, then build frontend and CMS
 pnpm build:generated                       # Build with existing generated types
@@ -89,13 +89,14 @@ pnpm --filter @fxmk/cms check-format       # CMS Prettier check
 
 pnpm --filter @fxmk/payload-types pull-payload-types # Populate libs/payload-types
 pnpm --filter @fxmk/e2e e2e                         # Open Playwright UI
+pnpm --filter @fxmk/e2e typecheck                   # Check E2E types without emitting files
 ```
 
 ## Generated Types
 
 Payload types are generated from the CMS and copied into `libs/payload-types`.
 Those generated files are gitignored. Run `pnpm generate:types` before frontend
-typechecks or builds in a fresh checkout.
+or E2E typechecks or frontend builds in a fresh checkout.
 
 ## Quality Checklist
 

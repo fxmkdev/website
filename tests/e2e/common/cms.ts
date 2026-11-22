@@ -2,18 +2,9 @@ import { createId } from "@paralleldrive/cuid2";
 import fs from "fs/promises";
 import path from "path";
 import { Page, Post } from "@fxmk/payload-types";
-import {
-  paragraph,
-  richTextRoot,
-  text,
-  type RichTextObject,
-} from "@fxmk/shared";
+import { paragraph, richTextRoot, text } from "@fxmk/shared";
 
-// Shared builders produce the minimal serialized rich-text shape accepted by
-// Payload; the generated document type also includes editor-only defaults.
-type CreatePageDto = Omit<Page, "id" | "updatedAt" | "createdAt" | "hero"> & {
-  hero?: { richText?: RichTextObject | NonNullable<Page["hero"]>["richText"] };
-};
+type CreatePageDto = Omit<Page, "id" | "updatedAt" | "createdAt">;
 
 export async function createPage(data: Partial<CreatePageDto> = {}) {
   const testPagePathname = `/e2e/${createId()}`;
@@ -31,12 +22,7 @@ export async function createPage(data: Partial<CreatePageDto> = {}) {
   return await create("pages", data);
 }
 
-type CreatePostDto = Omit<
-  Post,
-  "id" | "updatedAt" | "createdAt" | "content"
-> & {
-  content: Post["content"] | RichTextObject;
-};
+type CreatePostDto = Omit<Post, "id" | "updatedAt" | "createdAt">;
 
 export async function createPost(data: Partial<CreatePostDto> = {}) {
   const testPostSlug = `e2e-${createId()}`;
