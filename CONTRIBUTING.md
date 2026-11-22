@@ -93,6 +93,33 @@ Keep descriptions concise, imperative, and behavior-focused.
 - Keep runtime constraints at `>=26.13.1 <27` and `@types/node` on the Node 26
   line, aligned through the workspace override.
 
+## Package Manager
+
+Use the exact pnpm version pinned in `package.json#packageManager`. Install it
+with `npm install --global pnpm@12.21.0`, then run
+`pnpm install --frozen-lockfile` from the repository root. pnpm 12 validates
+workspace settings strictly; keep non-registry configuration in
+`pnpm-workspace.yaml`, not `.npmrc`.
+
+Workspace dependencies use symlinks so generated Payload types are immediately
+visible to their consumers. Workspace injection is intentionally disabled; the
+old `.npmrc` injection setting was already ignored by pnpm 11.
+
+When upgrading pnpm, update all four `packageManager` pins with the verified npm
+tarball integrity, the root `engines.pnpm` constraint, and both Docker image
+pins together. The frontend copies pnpm from the Debian image; the CMS uses its
+Alpine variant to match musl. Docker copies the complete `/opt/pnpm` directory,
+including pnpm's bundled `node-gyp`.
+
+The lockfile stays on format 9 with a single YAML document. `pmOnFail: ignore`
+prevents pnpm 12 from adding its package-manager bootstrap document, which
+[GitHub's dependency graph cannot read](https://docs.github.com/en/code-security/reference/supply-chain-security/supported-ecosystems-and-repositories#pnpm).
+This preserves Dependabot alerts and security updates. pnpm's automatic version
+switching is disabled; install the pinned version explicitly. `engines.pnpm`
+rejects installs with another pnpm version, CI checks the installed version and
+rejects a bootstrap document, and Docker uses the exact pinned distribution.
+Revisit this workaround when GitHub supports the two-document lockfile.
+
 ## Review Comment Workflow
 
 - If the current Codex/chat thread is linked to an open pull request, push newly

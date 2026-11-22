@@ -11,3 +11,18 @@ runs:
         node-version-file: .nvmrc
         cache: "pnpm"
         cache-dependency-path: pnpm-lock.yaml
+    - name: Verify PNPM version
+      shell: bash
+      run: |
+        EXPECTED_VERSION=$(node -p "require('./package.json').packageManager.split('@')[1].split('+')[0]")
+        test "$(pnpm --version)" = "$EXPECTED_VERSION"
+    - name: Verify dependency graph compatibility
+      shell: bash
+      run: |
+        node --input-type=module <<'NODE'
+        import { readFileSync } from "node:fs";
+        const lockfile = readFileSync("pnpm-lock.yaml", "utf8");
+        if (/^---[ \t]*(?:#.*)?$/m.test(lockfile)) {
+          throw new Error("Keep pnpm-lock.yaml as one YAML document for GitHub's dependency graph (pmOnFail: ignore).");
+        }
+        NODE
