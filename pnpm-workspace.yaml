@@ -4,6 +4,10 @@ packages:
   - "tests/*"
   - "tools/*"
 
+# Keep a single-document lockfile for GitHub's dependency graph and Dependabot.
+# Exact versions are enforced by engines.pnpm and the CI/Docker setup.
+pmOnFail: ignore
+
 allowBuilds:
   "@parcel/watcher": true
   esbuild: true
