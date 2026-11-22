@@ -40,6 +40,18 @@ with 8.0. Start a fresh database with a separate Compose project, for example
 `docker compose -p website-cms-mongo80 -f apps/cms/docker-compose.yml up -d`,
 and preserve the original volume for recovery.
 
+Dependency security overrides live in `pnpm-workspace.yaml`, alongside an
+explicit 24-hour minimum release age. Prefer compatible upstream updates, remove
+obsolete overrides, and use exact-version release-age exceptions only when a
+security fix requires one. Run both `pnpm audit` and `pnpm audit --prod` after
+updating the lockfile.
+
+The remaining overrides keep Node typings on major 26, patch Tailwind
+Typography's selector parser, and retain scoped security exceptions for Happy
+DOM 20 and minimatch 10. Those last two resolve to patched major versions
+because their requested majors lack fixes; recheck their upstream consumers
+before removing the exceptions.
+
 For MongoDB and S3 backup/recovery, use `pnpm data backup --env <environment>`
 and `pnpm data restore --env <environment>`. See the
 [backup CLI guide](tools/backup/README.md) for configuration, required snapshot
