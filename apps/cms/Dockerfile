@@ -4,8 +4,9 @@
 
 FROM node:26.13.1-alpine AS base
 
-# Install latest corepack to work around this issue: https://github.com/nodejs/corepack/issues/612
-RUN npm install -g corepack@latest
+# Keep aligned with package.json#packageManager; match the base image libc.
+COPY --from=ghcr.io/pnpm/pnpm:12.21.0-alpine /opt/pnpm /opt/pnpm
+RUN for bin in pnpm pn pnpx pnx; do ln -s "/opt/pnpm/$bin" "/usr/local/bin/$bin"; done
 
 # Install dependencies only when needed
 FROM base AS builder
@@ -14,10 +15,8 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 ENV CI=true
 
-RUN corepack enable pnpm
-
 # Install dependencies
-COPY --link package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY --link package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --link apps/cms/package.json apps/cms/
 COPY --link libs/shared/package.json libs/shared/
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
@@ -44,7 +43,6 @@ RUN cp /tmp/cms-package.json apps/cms/package.json
 
 # Production image, copy all the files and run next
 FROM base AS runner
-RUN corepack enable pnpm
 WORKDIR /app
 
 ENV NODE_ENV=production

@@ -33,7 +33,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install CMS dependencies
-        run: pnpm --filter cms install
+        run: pnpm --filter cms install --frozen-lockfile
       - name: Pull CMS types
         run: pnpm --filter payload-types pull-payload-types
       - name: Upload CMS types
@@ -51,7 +51,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install dependencies
-        run: pnpm --filter frontend install
+        run: pnpm --filter frontend install --frozen-lockfile
       - name: Run lint in frontend
         run: pnpm --filter frontend lint --max-warnings=0
 
@@ -64,7 +64,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install dependencies
-        run: pnpm --filter frontend install
+        run: pnpm --filter frontend install --frozen-lockfile
       - name: Check format in frontend
         run: pnpm --filter frontend check-format
 
@@ -83,7 +83,7 @@ jobs:
           name: payload-types
           path: libs/payload-types/src
       - name: Install dependencies
-        run: pnpm --filter frontend install
+        run: pnpm --filter frontend install --frozen-lockfile
       - name: Run typecheck in frontend
         run: pnpm --filter frontend typecheck
 
@@ -96,7 +96,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install dependencies
-        run: pnpm --filter frontend install
+        run: pnpm --filter frontend install --frozen-lockfile
       - name: Run unit tests in frontend
         run: pnpm --filter frontend test
 
@@ -150,7 +150,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install dependencies
-        run: pnpm --filter cms install
+        run: pnpm --filter cms install --frozen-lockfile
       - name: Run lint
         run: pnpm --filter cms lint --max-warnings=0
 
@@ -163,7 +163,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install dependencies
-        run: pnpm --filter cms install
+        run: pnpm --filter cms install --frozen-lockfile
       - name: Check format in frontend
         run: pnpm --filter cms check-format
 
@@ -216,7 +216,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install dependencies for e2e
-        run: pnpm --filter e2e install
+        run: pnpm --filter e2e install --frozen-lockfile
       - name: Set up flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
         with:
@@ -263,7 +263,7 @@ jobs:
       - name: Get Playwright version
         id: playwright-version
         run: |
-          PLAYWRIGHT_VERSION=$(pnpm list @playwright/test --depth=0 | grep '@playwright/test' | awk '{print $2}')
+          PLAYWRIGHT_VERSION=$(node -p "require('@playwright/test/package.json').version")
           echo "playwright_version=${PLAYWRIGHT_VERSION}" >> $GITHUB_OUTPUT
         working-directory: tests/e2e
       - name: Cache Playwright browsers
@@ -351,7 +351,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
       - name: Install dependencies
-        run: pnpm --filter . install
+        run: pnpm --filter . install --frozen-lockfile
       - name: Create release
         run: |
           pnpm exec releaser publish --draft ${{ needs.version.outputs.version }}

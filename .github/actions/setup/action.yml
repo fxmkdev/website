@@ -11,3 +11,8 @@ runs:
         node-version-file: .nvmrc
         cache: "pnpm"
         cache-dependency-path: pnpm-lock.yaml
+    - name: Verify PNPM version
+      shell: bash
+      run: |
+        EXPECTED_VERSION=$(node -p "require('./package.json').packageManager.split('@')[1].split('+')[0]")
+        test "$(pnpm --version)" = "$EXPECTED_VERSION"

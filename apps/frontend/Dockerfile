@@ -12,10 +12,9 @@ WORKDIR /app
 # Set production environment
 ENV NODE_ENV="production"
 
-# Install latest corepack to work around this issue: https://github.com/nodejs/corepack/issues/612
-RUN npm install -g corepack@latest
-
-RUN corepack enable pnpm
+# Keep aligned with package.json#packageManager; match the base image libc.
+COPY --from=ghcr.io/pnpm/pnpm:12.21.0 /opt/pnpm /opt/pnpm
+RUN for bin in pnpm pn pnpx pnx; do ln -s "/opt/pnpm/$bin" "/usr/local/bin/$bin"; done
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
@@ -26,7 +25,7 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
 
 # Install node modules
-COPY --link package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY --link package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --link apps/frontend/package.json apps/frontend/
 COPY --link libs/shared/package.json libs/shared/
 COPY --link libs/payload-types/package.json libs/payload-types/
@@ -49,7 +48,6 @@ RUN cd apps/frontend && ./node_modules/.bin/react-router build
 RUN cp /tmp/frontend-package.json apps/frontend/package.json
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm config set store-dir /pnpm/store && pnpm --dir apps/frontend prune --prod
-
 
 # Final stage for app image
 FROM base

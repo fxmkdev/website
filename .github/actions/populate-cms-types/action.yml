@@ -4,7 +4,7 @@ runs:
   using: "composite"
   steps:
     - name: "Install dependencies"
-      run: pnpm --filter cms install
+      run: pnpm --filter cms install --frozen-lockfile
       shell: bash
     - run: pnpm pull-payload-types
       shell: bash

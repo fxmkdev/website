@@ -93,6 +93,27 @@ Keep descriptions concise, imperative, and behavior-focused.
 - Keep runtime constraints at `>=26.13.1 <27` and `@types/node` on the Node 26
   line, aligned through the workspace override.
 
+## Package Manager
+
+Use the exact pnpm version pinned in `package.json#packageManager`. Install it
+with `npm install --global pnpm@12.21.0`, then run
+`pnpm install --frozen-lockfile` from the repository root. pnpm 12 validates
+workspace settings strictly; keep non-registry configuration in
+`pnpm-workspace.yaml`, not `.npmrc`.
+
+Workspace dependencies use symlinks so generated Payload types are immediately
+visible to their consumers. Workspace injection is intentionally disabled; the
+old `.npmrc` injection setting was already ignored by pnpm 11.
+
+When upgrading pnpm, update all four `packageManager` pins with the verified npm
+tarball integrity and both Docker image pins together. The frontend copies pnpm
+from the Debian image; the CMS uses its Alpine variant to match musl. Docker
+copies the complete `/opt/pnpm` directory, including pnpm's bundled `node-gyp`.
+The lockfile stays on format 9; no experimental lockfile format is enabled. pnpm
+12 adds a separate YAML document locking pnpm and its platform binaries; the
+application dependency document is unchanged. Lockfile readers and scanners must
+handle both YAML documents.
+
 ## Review Comment Workflow
 
 - If the current Codex/chat thread is linked to an open pull request, push newly
